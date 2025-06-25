@@ -1,5 +1,7 @@
 {
+
   "name": "mytravel",
+
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,6 +13,7 @@
   },
   "dependencies": {
     "react": "^19.1.0",
+
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2"
   },
@@ -24,5 +27,6 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
     "vite": "^7.0.0"
+
   }
 }
