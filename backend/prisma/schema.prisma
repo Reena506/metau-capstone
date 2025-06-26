@@ -18,17 +18,24 @@ model User {
   id       Int    @id @default(autoincrement())
   username String @unique
   password String
+  trips Trip[]
+  events Event[]
+  expenses Expense[]
+  notes Note[]
+
 }
 
 model Trip{
   id Int @id @default(autoincrement())
   title String
   destination String
-  start_date String
-  end_date String
+  start_date DateTime @db.Date
+  end_date DateTime @db.Date
   events Event[]
   expenses Expense[]
   notes Note[]
+  userId Int
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
 
 }
 
@@ -39,22 +46,27 @@ model Event{
   event String
   description String
   day_number Int
-  start_time String
-  end_time String
+  start_time DateTime
+  end_time DateTime
   location String
   tripId Int
   trip   Trip @relation(fields: [tripId], references: [id])
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
   
 }
 
 model Expense{
   id Int @id @default(autoincrement())
   title String
-  amount Int
+  amount  Decimal @db.Money
   category String
-  date String
+  date DateTime @db.Date
   tripId Int
   trip   Trip @relation(fields: [tripId], references: [id])
+  userId Int 
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
+  
   
 }
 
@@ -64,6 +76,9 @@ model Note{
   content String
   tripId Int
   trip   Trip @relation(fields: [tripId], references: [id])
+  userId Int
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
+  
   
 }
 
