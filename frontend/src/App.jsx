@@ -1,10 +1,12 @@
-
+import React from 'react';
+import WithAuth from './components/WithAuth';
 import { useEffect, useState} from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Navigate } from "react-router-dom";
 import SignupForm from './components/SignupForm';
 import LoginForm from './components/LoginForm';
 import { useUser } from './contexts/UserContext';
+import Navbar from './components/Navbar';
 import './App.css'
 
 const App = () => {
@@ -32,10 +34,9 @@ const App = () => {
     <Router>
       <main>
         <header>
-          <h1>MyTravel</h1>
+          <h1 className='title'>MyTravel</h1>
+          <Navbar/>
         </header>
-
-        
         <Routes>
            <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/signup" element={<SignupForm />} />

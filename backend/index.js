@@ -4,11 +4,9 @@ const session = require('express-session')
 const PORT = 3000
 
 const triproutes=require('./routes/trips')
-// const eventroutes=require('./routes/events')
 const authRoutes = require('./routes/auth')
 const app = express()
 
-// const { ValidationError } = require('./middleware/CustomErrors')
 
 
 app.use(cors({
@@ -27,15 +25,7 @@ app.use(session({
 app.use(authRoutes)
 app.use('/trips', triproutes)
 
-// app.use((err, req, res, next) => {
-//     if (err instanceof ValidationError) {
-//       return res.status(err.statusCode).json({ error: err.message })
-//     }
 
-//     // Additional Prisma error checks can be placed here
-//     res.status(500).json({ error: "Internal Server Error" })
-// })  
-// app.use('/events', eventroutes)
 
 app.get('/', (req, res) => {
   res.send('Welcome to my homepage!')
