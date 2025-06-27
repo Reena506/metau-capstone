@@ -4,6 +4,9 @@ const session = require('express-session')
 const PORT = 3000
 
 const triproutes=require('./routes/trips')
+const eventroutes=require('./routes/events')
+const expenseroutes=require('./routes/expenses')
+const noteroutes=require('./routes/notes')
 const authRoutes = require('./routes/auth')
 const app = express()
 
@@ -24,7 +27,9 @@ app.use(session({
 }))
 app.use(authRoutes)
 app.use('/trips', triproutes)
-
+app.use('/trips', eventroutes)
+app.use('/trips', expenseroutes)
+app.use('/trips', noteroutes)
 
 
 app.get('/', (req, res) => {
