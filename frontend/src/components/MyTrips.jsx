@@ -12,7 +12,6 @@ const MyTrips = () => {
     end_date: ""
   });
 
-
   const navigate = useNavigate();
 
 
@@ -178,7 +177,7 @@ const MyTrips = () => {
             </label>
 
 
-            <div style={{ marginTop: "1rem" }}>
+            <div>
               <button type="submit">Create Trip</button>
               <button type="button" onClick={() => setShowModal(false)}>
                 Cancel
