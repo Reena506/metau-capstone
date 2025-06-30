@@ -32,8 +32,8 @@ const LoginForm = () => {
 
             if (response.ok) {
                 setMessage({ type: "success", text: "Login successful!" });
-                setUser(data); // Set the user in context with id and username
-                navigate("/"); // Redirect to the homepage
+                setUser(data); 
+                navigate("/my-trips"); 
             } else {
                 setMessage({ type: "error", text: data.error || "Login failed." });
             }

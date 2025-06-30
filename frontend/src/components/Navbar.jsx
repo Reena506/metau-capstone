@@ -1,31 +1,66 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
+  const { user, setUser } = useUser();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('login'); // default to login
+  const location = useLocation();
 
-  const handleNavigation = (tab) => {
-    setActiveTab(tab);
-    navigate(`/${tab}`);
+  // Check if we're on a trip detail page
+  const isOnTripPage = location.pathname.includes('/trips/') && location.pathname !== '/my-trips';
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        setUser(null);
+        navigate('/login');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  const handleBackToTrips = () => {
+    navigate('/my-trips');
   };
 
   return (
-    <nav>
-      <button
-        onClick={() => handleNavigation('login')}
-      >
-        Login
-      </button>
-      <button
-        onClick={() => handleNavigation('signup')}
-      >
-        Sign Up
-      </button>
+    <nav className="main-navbar">
+      <div className="navbar-content">
+        
+        <div className="navbar-center">
+          <h1 className="app-title">MyTravel</h1>
+        </div>
+        
+        <div className="navbar-right">
+          {!user && (
+            <>
+              <button onClick={() => navigate('/login')}>Login</button>
+              <button onClick={() => navigate('/signup')}>Sign Up</button>
+            </>
+          )}
+          {user && (
+            <>
+              {isOnTripPage && (
+                <button onClick={handleBackToTrips} className="back-btn">
+                  ← Back to My Trips
+                </button>
+              )}
+              <button onClick={handleLogout}>Logout</button>
+            </>
+          )}
+        </div>
+      </div>
     </nav>
   );
 };
 
 export default Navbar;
-
 
