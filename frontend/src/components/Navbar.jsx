@@ -34,9 +34,6 @@ const Navbar = () => {
   return (
     <nav className="main-navbar">
       <div className="navbar-content">
-        <div className="navbar-left">
-          {/* Left side - could add logo or other elements */}
-        </div>
         
         <div className="navbar-center">
           <h1 className="app-title">MyTravel</h1>
