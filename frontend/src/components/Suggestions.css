@@ -1,0 +1,62 @@
+.container {
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.searchtitle {
+  text-align: center;
+}
+
+.search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.input {
+  flex-grow: 1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.search-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+  margin-bottom: 20px;
+}
+
+.attractions-list {
+  display: grid;
+  gap: 20px;
+}
+
+.attraction-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.attraction-name {
+  margin: 0 0 8px 0;
+}
+
+.attraction-address,.attraction-rating,.attraction-status {
+  margin: 4px 0;
+}
+
+.attraction-status.open {
+  color: green;
+}
+
+.attraction-status.closed {
+  color: red;
+}
