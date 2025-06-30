@@ -10,6 +10,22 @@ const isAuthenticated = (req, res, next) => {
     next()
 }
 
+router.get("/my", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const trips = await prisma.trip.findMany({
+      where: { userId },
+    });
+    res.json(trips);
+  } catch (error) {
+    console.error("Error fetching user's trips:", error);
+    res.status(500).json({ error: "Failed to load your trips." });
+  }
+});
+
+
+
+
 router.get("/", async (req, res) => {try {
         const trips = await prisma.trip.findMany()
         res.json(trips)
@@ -20,23 +36,30 @@ router.get("/", async (req, res) => {try {
 })
 
 router.get("/:tripId", async (req, res) => {
-  const tripId = parseInt(req.params.tripId)
+  const tripId = parseInt(req.params.tripId);
 
-    try {
-        const trip = await prisma.trip.findUnique({
-            where: { id: tripId }
-        })
+  if (isNaN(tripId)) {
+    return res.status(400).json({ error: "Invalid trip ID" });
+  }
 
-        if (trip) {
-            res.json(trip)
-        } else {
-            res.status(404).send('Trip not found')
-        }
-    } catch (error) {
-        console.error("Error fetching trip:", error)
-        res.status(500).json({ error: "Something went wrong while fetching the trip." })
+  try {
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId }
+    });
+
+    if (trip) {
+      res.json(trip);
+    } else {
+      res.status(404).send("Trip not found");
     }
-})
+  } catch (error) {
+    console.error("Error fetching trip:", error);
+    res.status(500).json({ error: "Something went wrong while fetching the trip." });
+  }
+});
+
+
+
 
 router.post("/", isAuthenticated, async (req, res) => {
   const { title, destination, start_date, end_date } = req.body;
@@ -96,7 +119,7 @@ router.put("/:tripId", isAuthenticated, async (req, res) => {
 
         const updatedTrip = await prisma.trip.update({
             where: { id: tripId },
-            data: { title, destination, start_date, end_date }
+            data: { title, destination, start_date:new Date(start_date), end_date:new Date(end_date) }
         })
 
         res.json(updatedTrip)

@@ -23,6 +23,8 @@ model User {
   expenses Expense[]
   notes Note[]
 
+
+  Budget Budget[]
 }
 
 model Trip{
@@ -33,10 +35,10 @@ model Trip{
   end_date DateTime @db.Date
   events Event[]
   expenses Expense[]
+  budget Budget[]
   notes Note[]
   userId Int
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
-
 }
 
 
@@ -45,7 +47,6 @@ model Event{
   id Int @id @default(autoincrement())
   event String
   description String
-  day_number Int
   start_time DateTime
   end_time DateTime
   location String
@@ -82,3 +83,11 @@ model Note{
   
 }
 
+model Budget{
+  id Int @id @default(autoincrement())
+  amount Decimal @db.Money
+  tripId Int
+  trip   Trip @relation(fields: [tripId], references: [id])
+  userId Int
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
+}
