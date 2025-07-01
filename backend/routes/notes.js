@@ -42,8 +42,10 @@ router.get("/:tripId/notes/:noteId", async (req, res) => {
 });
 
 router.post("/:tripId/notes", isAuthenticated, async (req, res) => {
-  const {title, content  } = req.body;
-
+  const { title, content } = req.body;
+  if (!tripId) {
+    return res.status(400).json({ error: "invalid trip ID" });
+  }
   if (!title || !content) {
     return res.status(400).json({ error: "All fields are required" });
   }
@@ -56,7 +58,8 @@ router.post("/:tripId/notes", isAuthenticated, async (req, res) => {
   try {
     const newnote = await prisma.note.create({
       data: {
-        title, content,
+        title,
+        content,
         tripId: parseInt(req.params.tripId),
         userId: req.session.userId,
       },
@@ -71,65 +74,57 @@ router.post("/:tripId/notes", isAuthenticated, async (req, res) => {
   }
 });
 
-router.put(
-  "/:tripId/notes/:noteId",
-  isAuthenticated,
-  async (req, res) => {
-    const { noteId } = req.params;
-    const { title, content  } = req.body;
-    try {
-      const updatednote = await prisma.note.update({
-        where: { id: parseInt(noteId) },
-        data: {
-          title,
-          content,
-          tripId: parseInt(req.params.tripId),
-          userId: req.session.userId,
-        },
-      });
-      res.json(updatednote);
-    } catch (error) {
-      console.error("Error updating note:", error);
-      res
-        .status(500)
-        .json({ error: "Something went wrong while updating the note." });
-    }
+router.put("/:tripId/notes/:noteId", isAuthenticated, async (req, res) => {
+  const { noteId } = req.params;
+  const { title, content } = req.body;
+  try {
+    const updatednote = await prisma.note.update({
+      where: { id: parseInt(noteId) },
+      data: {
+        title,
+        content,
+        tripId: parseInt(req.params.tripId),
+        userId: req.session.userId,
+      },
+    });
+    res.json(updatednote);
+  } catch (error) {
+    console.error("Error updating note:", error);
+    res
+      .status(500)
+      .json({ error: "Something went wrong while updating the note." });
   }
-);
+});
 
-router.delete(
-  "/:tripId/notes/:noteId",
-  isAuthenticated,
-  async (req, res) => {
-    const noteId = parseInt(req.params.noteId);
+router.delete("/:tripId/notes/:noteId", isAuthenticated, async (req, res) => {
+  const noteId = parseInt(req.params.noteId);
 
-    try {
-      const note = await prisma.note.findUnique({
-        where: { id: noteId },
-      });
+  try {
+    const note = await prisma.note.findUnique({
+      where: { id: noteId },
+    });
 
-      if (!note) {
-        return res.status(404).json({ error: "note not found" });
-      }
-
-      if (note.userId !== req.session.userId) {
-        return res
-          .status(403)
-          .json({ error: "You can only delete your own notes" });
-      }
-
-      await prisma.note.delete({
-        where: { id: noteId },
-      });
-
-      res.json({ message: "note deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting note:", error);
-      res
-        .status(500)
-        .json({ error: "Something went wrong while deleting the note." });
+    if (!note) {
+      return res.status(404).json({ error: "note not found" });
     }
+
+    if (note.userId !== req.session.userId) {
+      return res
+        .status(403)
+        .json({ error: "You can only delete your own notes" });
+    }
+
+    await prisma.note.delete({
+      where: { id: noteId },
+    });
+
+    res.json({ message: "note deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting note:", error);
+    res
+      .status(500)
+      .json({ error: "Something went wrong while deleting the note." });
   }
-);
+});
 
 module.exports = router;
