@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from '../contexts/UserContext';
+const APP_URL=import.meta.env.VITE_APP_URL
 
 const WithAuth = (WrappedComponent) => {
     return function ProtectedComponent(props) {
@@ -9,7 +10,7 @@ const WithAuth = (WrappedComponent) => {
 
         useEffect(() => {
             if (!user) {
-                fetch("http://localhost:3000/me", { credentials: "include" })
+                fetch(`${APP_URL}/me`, { credentials: "include" })
                     .then((response) => response.json())
                     .then((data) => {
                         if (data.id) { // Ensure the response contains the user id

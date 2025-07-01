@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+const APP_URL=import.meta.env.VITE_APP_URL
 
 function Notes() {
   const { tripId } = useParams();
@@ -17,7 +18,7 @@ function Notes() {
 
   const fetchNotes = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/trips/${tripId}/notes`, { 
+      const response = await fetch(`${APP_URL}/trips/${tripId}/notes`, { 
         credentials: "include" 
       });
       const data = await response.json();
@@ -39,8 +40,8 @@ function Notes() {
     
     try {
       const url = editingNote 
-        ? `http://localhost:3000/trips/${tripId}/notes/${editingNote.id}`
-        : `http://localhost:3000/trips/${tripId}/notes`;
+        ? `${APP_URL}/${tripId}/notes/${editingNote.id}`
+        : `${APP_URL}/trips/${tripId}/notes`;
       
       const method = editingNote ? "PUT" : "POST";
       
@@ -84,7 +85,7 @@ function Notes() {
     if (!window.confirm("Are you sure you want to delete this note?")) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/trips/${tripId}/notes/${noteId}`, {
+      const response = await fetch(`${APP_URL}/trips/${tripId}/notes/${noteId}`, {
         method: "DELETE",
         credentials: "include"
       });

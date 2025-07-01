@@ -1,6 +1,7 @@
 import { useParams, Link, useLocation, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import './TripNavBar.css'
+const APP_URL=import.meta.env.VITE_APP_URL
 
 function TripNavBar() {
  const { tripId } = useParams();
@@ -8,7 +9,7 @@ function TripNavBar() {
  const location = useLocation();
 
  useEffect(() => {
-   fetch(`http://localhost:3000/trips/${tripId}`, { credentials: "include" })
+   fetch(`${APP_URL}/trips/${tripId}`, { credentials: "include" })
      .then((res) => res.json())
      .then((data) => setTrip(data));
  }, [tripId]);

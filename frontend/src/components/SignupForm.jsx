@@ -1,6 +1,7 @@
 import { useState } from "react"
 import React from 'react';
 // import '../styles/SignupForm.css'
+const APP_URL=import.meta.env.VITE_APP_URL
 
 const SignupForm = () => {
     const [formData, setFormData] = useState({ username: "", password: "", })
@@ -22,7 +23,7 @@ const SignupForm = () => {
         console.log("User Input:", formData); // Logs user input
 
         try {
-            const response = await fetch("http://localhost:3000/signup", {
+            const response = await fetch(`${APP_URL}/signup`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
