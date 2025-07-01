@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from '../contexts/UserContext';
 import React from 'react';
-
+const APP_URL=import.meta.env.VITE_APP_URL
 const LoginForm = () => {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [message, setMessage] = useState(null);
@@ -21,7 +21,7 @@ const LoginForm = () => {
         event.preventDefault();
 
         try {
-            const response = await fetch("http://localhost:3000/login", {
+            const response = await fetch(`${APP_URL}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),

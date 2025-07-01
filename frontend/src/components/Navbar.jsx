@@ -1,5 +1,6 @@
 import { useUser } from '../contexts/UserContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+const APP_URL=import.meta.env.VITE_APP_URL
 
 const Navbar = () => {
   const { user, setUser } = useUser();
@@ -11,7 +12,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('http://localhost:3000/logout', {
+      const res = await fetch(`${APP_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });

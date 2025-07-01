@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+const APP_URL=import.meta.env.VITE_APP_URL
 
 
 const MyTrips = () => {
@@ -26,7 +27,7 @@ const MyTrips = () => {
 
   useEffect(() => {
     const fetchTrips = async () => {
-      const res = await fetch("http://localhost:3000/trips/my", {
+      const res = await fetch(`${APP_URL}/trips/my`, {
         credentials: "include"
       });
       const data = await res.json();
@@ -43,7 +44,7 @@ const MyTrips = () => {
 
 
     try {
-      const res = await fetch(`http://localhost:3000/trips/${tripId}`, {
+      const res = await fetch(`${APP_URL}/trips/${tripId}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -78,7 +79,7 @@ const MyTrips = () => {
     e.preventDefault();
 
 
-    const res = await fetch("http://localhost:3000/trips", {
+    const res = await fetch(`${APP_URL}/trips`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

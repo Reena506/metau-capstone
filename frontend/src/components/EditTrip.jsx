@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+const APP_URL=import.meta.env.VITE_APP_URL
 
 const EditTrip = () => {
   const { tripId } = useParams();
@@ -15,7 +16,7 @@ const EditTrip = () => {
   useEffect(() => {
     const fetchTrip = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/trips/${tripId}`, {
+        const res = await fetch(`${APP_URL}/trips/${tripId}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to fetch trip");
@@ -44,7 +45,7 @@ const EditTrip = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await fetch(`http://localhost:3000/trips/${tripId}`, {
+    const res = await fetch(`${APP_URL}/trips/${tripId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
