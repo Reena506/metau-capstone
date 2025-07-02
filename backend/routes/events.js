@@ -42,13 +42,12 @@ router.get("/:tripId/events/:eventId", async (req, res) => {
 });
 
 router.post("/:tripId/events", isAuthenticated, async (req, res) => {
-  const { event, description, day_number, start_time, end_time, location } =
+  const { event, date, start_time, end_time, location } =
     req.body;
 
   if (
     !event ||
-    !description ||
-    !day_number ||
+    !date ||
     !start_time ||
     !end_time ||
     !location
@@ -65,8 +64,7 @@ router.post("/:tripId/events", isAuthenticated, async (req, res) => {
     const newEvent = await prisma.event.create({
       data: {
         event,
-        description,
-        day_number,
+        date,
         start_time,
         end_time,
         location,
@@ -86,15 +84,14 @@ router.post("/:tripId/events", isAuthenticated, async (req, res) => {
 
 router.put("/:tripId/events/:eventId", isAuthenticated, async (req, res) => {
   const { eventId } = req.params;
- const { event, description, day_number, start_time, end_time, location } =
+ const { event, date, start_time, end_time, location } =
     req.body;
      try {
   const updatedEvent = await prisma.event.update({
     where: { id: parseInt(eventId) },
     data: {
         event,
-        description,
-        day_number,
+        date,
         start_time,
         end_time,
         location,

@@ -46,7 +46,7 @@ model Trip{
 model Event{
   id Int @id @default(autoincrement())
   event String
-  description String
+  date DateTime @db.Date
   start_time DateTime
   end_time DateTime
   location String
