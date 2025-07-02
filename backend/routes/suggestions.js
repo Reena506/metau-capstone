@@ -21,7 +21,9 @@ router.get("/attractions", async (req, res) => {
     //   {
     //       formatted_address: '2800 Post Oak Blvd, Houston, TX 77056, United States',
     //       name: 'Gerald D. Hines Waterwall Park',
-    //       opening_hours: [Object],
+    //       opening_hours: {
+    //          "open_now": false
+    //        }
     //       rating: 4.7,
     //       user_ratings_total: 9123
     //       }
