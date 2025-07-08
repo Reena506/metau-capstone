@@ -1,0 +1,35 @@
+.bar-chart {
+ display: flex;
+ flex-direction: column;
+ gap: 8px;
+}
+
+
+.bar-row {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+}
+
+
+.bar-label {
+ width: 100px;
+ font-weight: 500;
+}
+
+
+.bar {
+ height: 24px;
+ color: white;
+ padding-left: 10px;
+ display: flex;
+ align-items: center;
+ border-radius: 4px;
+}
+
+
+
+
+
+
+
