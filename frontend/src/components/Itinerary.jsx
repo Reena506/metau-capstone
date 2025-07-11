@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { useParams } from 'react-router-dom';
+import ItineraryModal from './ItineraryModal';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Itinerary.css';
 
@@ -12,10 +13,13 @@ const Itinerary = () => {
   const { tripId } = useParams();
   const [events, setEvents] = useState([]);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState('week');
 
   const [eventForm, setEventForm] = useState({
     event: '',
@@ -63,7 +67,15 @@ const Itinerary = () => {
     }
   }, [tripId]);//runs only when tripId changes
 
-  const handleSelectSlot = ({ start, end }) => {  //user clicks on time slot and sets up form
+  const handleNavigate = (date, view, action) => {
+    setCurrentDate(date);
+  };
+
+  const handleViewChange = (view) => {
+    setCurrentView(view);
+  };
+
+  const handleSelectSlot = ({ start, end }) => {
     setSelectedEvent(null);
     setIsEditing(false);
     setEventForm({
@@ -97,7 +109,7 @@ const Itinerary = () => {
     }));
   };
 
-  const fetchAndUpdateEvents = async () => {     //used in save and delete to uppdate events
+  const fetchAndUpdateEvents = async () => {     //used in save and delete to update events
     try {
       setLoading(true);
       const response = await fetch(`${APP_URL}/trips/${tripId}/events`, {
@@ -117,6 +129,7 @@ const Itinerary = () => {
       }));
       setEvents(formatted);
       setError('');
+      setShowEventModal(false);
     } catch (err) {
       setError('Failed to refresh events');
     } finally {
@@ -124,7 +137,38 @@ const Itinerary = () => {
     }
   };
 
-  const handleSaveEvent = async (e) => {   //checks for required fields and sends post for new event or put to edit event
+  const handleGenerateItinerary = async (generatedEvents) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const promises = generatedEvents.map(eventData =>        //create a list of post requests
+        fetch(`${APP_URL}/trips/${tripId}/events`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(eventData)
+        })
+      );
+
+      const responses = await Promise.all(promises);   //wait for all fetches to be complete
+      
+      const failedRequests = responses.filter(response => !response.ok);  //error if failed response
+      if (failedRequests.length > 0) {
+        throw new Error(`Failed to create ${failedRequests.length} events`);
+      }
+
+      await fetchAndUpdateEvents();    
+      setShowItineraryModal(false);
+    } catch (err) {
+      setError('Failed to generate itinerary');
+      console.error('Error generating itinerary:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveEvent = async (e) => {
     e.preventDefault();
 
     if (!eventForm.event || !eventForm.location || !eventForm.date) {
@@ -157,8 +201,6 @@ const Itinerary = () => {
       if (!response.ok) throw new Error('Failed to save event');
 
       await fetchAndUpdateEvents();
-      setShowEventModal(false);
-      setError('');
     } catch (err) {
       setError('Failed to save event');
       console.error('Error saving event:', err);
@@ -205,11 +247,47 @@ const Itinerary = () => {
         </div>
       )}
 
+      {events.length === 0 && !loading && (
+        <div className="empty-state">
+          <h3>No events in your itinerary yet</h3>
+          <p>Get started by generating a personalized itinerary or adding events manually</p>
+          <div className="empty-state-buttons">
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowItineraryModal(true)}
+            >
+              Generate Itinerary
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowEventModal(true)}
+            >
+              Add Event Manually
+            </button>
+          </div>
+        </div>
+      )}
+
+      {events.length > 0 && (
+        <div className="calendar-header">
+          <button
+            className="btn btn-outline"
+            onClick={() => setShowItineraryModal(true)}
+          >
+            Generate New Itinerary
+          </button>
+        </div>
+      )}
+
       <Calendar
         localizer={localizer}
         events={events}
         startAccessor="start"
         endAccessor="end"
+        date={currentDate}
+        view={currentView}
+        onNavigate={handleNavigate}
+        onView={handleViewChange}
         defaultView="week"
         views={['week', 'day']}
         step={30}
@@ -218,6 +296,14 @@ const Itinerary = () => {
         onSelectEvent={handleSelectEvent}
         selectable
         components={{ event: EventComponent }}
+      />
+
+      <ItineraryModal
+        isOpen={showItineraryModal}
+        onClose={() => setShowItineraryModal(false)}
+        onGenerate={handleGenerateItinerary}
+        loading={loading}
+        error={error}
       />
 
       {showEventModal && (
@@ -331,5 +417,3 @@ const Itinerary = () => {
 };
 
 export default Itinerary;
-
-
