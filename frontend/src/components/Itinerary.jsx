@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import { useParams } from 'react-router-dom';
-import ItineraryModal from './ItineraryModal';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './Itinerary.css';
+import React, { useState, useEffect } from "react";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
+import { useParams } from "react-router-dom";
+import ItineraryModal from "./ItineraryModal";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import "./Itinerary.css";
 
 const APP_URL = import.meta.env.VITE_APP_URL;
 const localizer = momentLocalizer(moment); //formats dates and times
@@ -17,46 +17,47 @@ const Itinerary = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState('week');
+  const [currentView, setCurrentView] = useState("week");
 
   const [eventForm, setEventForm] = useState({
-    event: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-    location: ''
+    event: "",
+    date: "",
+    start_time: "",
+    end_time: "",
+    location: "",
   });
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${APP_URL}/trips/${tripId}/events`, {  //get request to backend API
-          method:'GET',
-          credentials: 'include'
+        const response = await fetch(`${APP_URL}/trips/${tripId}/events`, {
+          //get request to backend API
+          method: "GET",
+          credentials: "include",
         });
-        if (!response.ok) throw new Error('Failed to fetch events');
+        if (!response.ok) throw new Error("Failed to fetch events");
 
         const eventsData = await response.json();
-        const transformedEvents = eventsData.map(event => ({
+        const transformedEvents = eventsData.map((event) => ({
           id: event.id,
           title: event.event,
-          start: new Date(event.start_time),  //maps over events and converts into calendar friendly format
+          start: new Date(event.start_time), //maps over events and converts into calendar friendly format
           end: new Date(event.end_time),
           resource: {
-            location: event.location,  //custom components
+            location: event.location, //custom components
             date: event.date,
-            originalEvent: event
-          }
+            originalEvent: event,
+          },
         }));
 
-        setEvents(transformedEvents);  //updates components state
-        setError('');
+        setEvents(transformedEvents); //updates components state
+        setError("");
       } catch (err) {
-        setError('Failed to load events');
-        console.error('Error fetching events:', err);
+        setError("Failed to load events");
+        console.error("Error fetching events:", err);
       } finally {
         setLoading(false);
       }
@@ -65,7 +66,7 @@ const Itinerary = () => {
     if (tripId) {
       fetchEvents();
     }
-  }, [tripId]);//runs only when tripId changes
+  }, [tripId]); //runs only when tripId changes
 
   const handleNavigate = (date, view, action) => {
     setCurrentDate(date);
@@ -79,44 +80,47 @@ const Itinerary = () => {
     setSelectedEvent(null);
     setIsEditing(false);
     setEventForm({
-      event: '',
-      date: moment(start).format('YYYY-MM-DD'),
-      start_time: moment(start).format('YYYY-MM-DDTHH:mm'),
-      end_time: moment(end).format('YYYY-MM-DDTHH:mm'),
-      location: ''
+      event: "",
+      date: moment(start).format("YYYY-MM-DD"),
+      start_time: moment(start).format("YYYY-MM-DDTHH:mm"),
+      end_time: moment(end).format("YYYY-MM-DDTHH:mm"),
+      location: "",
     });
     setShowEventModal(true);
   };
 
-  const handleSelectEvent = (event) => {   //user clicks on existing event to view and edit
-    setSelectedEvent(event); 
+  const handleSelectEvent = (event) => {
+    //user clicks on existing event to view and edit
+    setSelectedEvent(event);
     setIsEditing(true);
     setEventForm({
       event: event.resource.originalEvent.event,
-      date: moment(event.resource.originalEvent.date).format('YYYY-MM-DD'),
-      start_time: moment(event.start).format('YYYY-MM-DDTHH:mm'),
-      end_time: moment(event.end).format('YYYY-MM-DDTHH:mm'),
-      location: event.resource.originalEvent.location
+      date: moment(event.resource.originalEvent.date).format("YYYY-MM-DD"),
+      start_time: moment(event.start).format("YYYY-MM-DDTHH:mm"),
+      end_time: moment(event.end).format("YYYY-MM-DDTHH:mm"),
+      location: event.resource.originalEvent.location,
     });
     setShowEventModal(true);
   };
 
-  const handleInputChange = (e) => {     //updates eventform
+  const handleInputChange = (e) => {
+    //updates eventform
     const { name, value } = e.target;
-    setEventForm(prev => ({
+    setEventForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const fetchAndUpdateEvents = async () => {     //used in save and delete to update events
+  const fetchAndUpdateEvents = async () => {
+    //used in save and delete to update events
     try {
       setLoading(true);
       const response = await fetch(`${APP_URL}/trips/${tripId}/events`, {
-        credentials: 'include'
+        credentials: "include",
       });
       const data = await response.json();
-      const formatted = data.map(event => ({
+      const formatted = data.map((event) => ({
         id: event.id,
         title: event.event,
         start: new Date(event.start_time),
@@ -124,14 +128,14 @@ const Itinerary = () => {
         resource: {
           location: event.location,
           date: event.date,
-          originalEvent: event
-        }
+          originalEvent: event,
+        },
       }));
       setEvents(formatted);
-      setError('');
+      setError("");
       setShowEventModal(false);
     } catch (err) {
-      setError('Failed to refresh events');
+      setError("Failed to refresh events");
     } finally {
       setLoading(false);
     }
@@ -140,29 +144,25 @@ const Itinerary = () => {
   const handleGenerateItinerary = async (generatedEvents) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
-      const promises = generatedEvents.map(eventData =>        //create a list of post requests
-        fetch(`${APP_URL}/trips/${tripId}/events`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(eventData)
-        })
-      );
+      const response = await fetch(`${APP_URL}/trips/${tripId}/events/batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ events: generatedEvents }),
+      });
 
-      const responses = await Promise.all(promises);   //wait for all fetches to be complete
-      
-      const failedRequests = responses.filter(response => !response.ok);  //error if failed response
-      if (failedRequests.length > 0) {
-        throw new Error(`Failed to create ${failedRequests.length} events`);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Request failed");
       }
 
-      await fetchAndUpdateEvents();    
+      await fetchAndUpdateEvents();
       setShowItineraryModal(false);
     } catch (err) {
-      setError('Failed to generate itinerary');
-      console.error('Error generating itinerary:', err);
+      setError("Failed to generate itinerary");
+      console.error("Error generating itinerary:", err);
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ const Itinerary = () => {
     e.preventDefault();
 
     if (!eventForm.event || !eventForm.location || !eventForm.date) {
-      setError('Please fill in all required fields');
+      setError("Please fill in all required fields");
       return;
     }
 
@@ -182,57 +182,64 @@ const Itinerary = () => {
         ...eventForm,
         date: new Date(eventForm.date).toISOString(),
         start_time: new Date(eventForm.start_time).toISOString(),
-        end_time: new Date(eventForm.end_time).toISOString()
+        end_time: new Date(eventForm.end_time).toISOString(),
       };
 
-      const url = isEditing && selectedEvent
-        ? `${APP_URL}/trips/${tripId}/events/${selectedEvent.id}`
-        : `${APP_URL}/trips/${tripId}/events`;
+      const url =
+        isEditing && selectedEvent
+          ? `${APP_URL}/trips/${tripId}/events/${selectedEvent.id}`
+          : `${APP_URL}/trips/${tripId}/events`;
 
-      const method = isEditing ? 'PUT' : 'POST';
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(eventData)
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(eventData),
       });
 
-      if (!response.ok) throw new Error('Failed to save event');
+      if (!response.ok) throw new Error("Failed to save event");
 
       await fetchAndUpdateEvents();
     } catch (err) {
-      setError('Failed to save event');
-      console.error('Error saving event:', err);
+      setError("Failed to save event");
+      console.error("Error saving event:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteEvent = async () => {                             //sends delete request 
-    if (!selectedEvent || !window.confirm('Delete this event?')) return;     //asks user for confirmation
+  const handleDeleteEvent = async () => {
+    //sends delete request
+    if (!selectedEvent || !window.confirm("Delete this event?")) return; //asks user for confirmation
 
     try {
       setLoading(true);
-      const response = await fetch(`${APP_URL}/trips/${tripId}/events/${selectedEvent.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${APP_URL}/trips/${tripId}/events/${selectedEvent.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to delete event');
+      if (!response.ok) throw new Error("Failed to delete event");
 
       await fetchAndUpdateEvents();
       setShowEventModal(false);
-      setError('');
+      setError("");
     } catch (err) {
-      setError('Failed to delete event');
-      console.error('Error deleting event:', err);
+      setError("Failed to delete event");
+      console.error("Error deleting event:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const EventComponent = ({ event }) => (     //shows title and location on calendar
+  const EventComponent = (
+    { event } //shows title and location on calendar
+  ) => (
     <div className="custom-event">
       <strong>{event.title}</strong>
       <div className="event-location">📍 {event.resource.location}</div>
@@ -250,7 +257,10 @@ const Itinerary = () => {
       {events.length === 0 && !loading && (
         <div className="empty-state">
           <h3>No events in your itinerary yet</h3>
-          <p>Get started by generating a personalized itinerary or adding events manually</p>
+          <p>
+            Get started by generating a personalized itinerary or adding events
+            manually
+          </p>
           <div className="empty-state-buttons">
             <button
               className="btn btn-primary"
@@ -271,10 +281,10 @@ const Itinerary = () => {
       {events.length > 0 && (
         <div className="calendar-header">
           <button
-            className="btn btn-outline"
-            onClick={() => setShowItineraryModal(true)}
+            className="btn btn-secondary"
+            onClick={() => setShowEventModal(true)}
           >
-            Generate New Itinerary
+            Add Event Manually
           </button>
         </div>
       )}
@@ -289,7 +299,7 @@ const Itinerary = () => {
         onNavigate={handleNavigate}
         onView={handleViewChange}
         defaultView="week"
-        views={['week', 'day']}
+        views={["week", "day"]}
         step={30}
         timeslots={2}
         onSelectSlot={handleSelectSlot}
@@ -311,9 +321,12 @@ const Itinerary = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                {isEditing ? 'Edit Event' : 'New Event'}
+                {isEditing ? "Edit Event" : "New Event"}
               </h2>
-              <button className="close-button" onClick={() => setShowEventModal(false)}>
+              <button
+                className="close-button"
+                onClick={() => setShowEventModal(false)}
+              >
                 ×
               </button>
             </div>
@@ -405,7 +418,7 @@ const Itinerary = () => {
                   className="btn btn-primary"
                   disabled={loading}
                 >
-                  {loading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
+                  {loading ? "Saving..." : isEditing ? "Update" : "Create"}
                 </button>
               </div>
             </form>
