@@ -86,8 +86,8 @@ function generateDayEvents(
       place.place && place.day && moment(place.day).isSame(currentDate, "day") //filters for specific places user wants on that day
   );
 
+  // Add user-specific events first
   specificForDay.forEach((specificPlace) => {
-    //adds fixed user events
     const startTime = moment(
       `${currentDate.format("YYYY-MM-DD")} ${specificPlace.time || "10:00"}`
     );
@@ -105,6 +105,15 @@ function generateDayEvents(
       isSpecified: true,
     });
   });
+
+  // Calculate how many more events we need to add
+  const remainingSlots = Math.max(0, eventsPerDay - specificForDay.length);
+  
+  // If we already have enough events from user specifications, just return sorted events
+  if (remainingSlots <= 0) {
+    events.sort((a, b) => moment(a.start_time).diff(moment(b.start_time)));
+    return adjustOverlappingEvents(events);
+  }
 
   let filteredActivityPool = [...activityPool];
 
@@ -154,8 +163,8 @@ function generateDayEvents(
   const shuffled = shuffleArray(filteredActivityPool); //shuffles the pool
   let selected = [];
 
-  for (let i = 0; i < shuffled.length && selected.length < eventsPerDay; i++) {
-    //loops through shuffled activities to add non-overlapping ones
+  // Only add activities up to the remaining slots
+  for (let i = 0; i < shuffled.length && selected.length < remainingSlots; i++) {
     const activity = shuffled[i];
     const timeKey = dailyStart === "early" ? "early" : "late"; //sets time based on user preference
     const startTime = moment(
@@ -163,15 +172,19 @@ function generateDayEvents(
     );
     const endTime = moment(startTime).add(activity.duration, "minutes");
 
-    const hasConflict = events.some(
-      //checks for time conflict
-      (evt) =>
-        startTime.isBefore(moment(evt.end_time)) &&
-        moment(evt.start_time).isBefore(endTime)
-    );
+    // Check for conflicts with ALL existing events (including user-specific ones)
+    const hasConflict = events.some((evt) => {
+      const evtStart = moment(evt.start_time);
+      const evtEnd = moment(evt.end_time);
+      
+      // More robust overlap detection with buffer time
+      return (
+        startTime.isBefore(evtEnd.add(15, "minutes")) &&
+        endTime.isAfter(evtStart.subtract(15, "minutes"))
+      );
+    });
 
     if (!hasConflict) {
-      //adds to list if no conflict
       events.push({
         event: activityNames[activity.type],
         date: currentDate.toISOString(),
@@ -189,7 +202,6 @@ function generateDayEvents(
 }
 
 function adjustOverlappingEvents(events) {
-  //loops through each event and shifts it 15 min if overlap
   const adjusted = [];
 
   for (let i = 0; i < events.length; i++) {
@@ -199,8 +211,10 @@ function adjustOverlappingEvents(events) {
 
     if (adjusted.length > 0) {
       const prevEnd = moment(adjusted[adjusted.length - 1].end_time);
+      
+      // If there's an overlap, move the event to start 30 minutes after previous ends
       if (start.isBefore(prevEnd)) {
-        const newStart = moment(prevEnd).add(15, "minutes");
+        const newStart = moment(prevEnd).add(30, "minutes"); // Increased buffer
         const duration = end.diff(start, "minutes");
         evt.start_time = newStart.toISOString();
         evt.end_time = newStart.add(duration, "minutes").toISOString();
@@ -215,9 +229,10 @@ function adjustOverlappingEvents(events) {
 
 function shuffleArray(array) {
   //makes sure each day has different event orders
-  for (let i = array.length - 1; i > 0; i--) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return array;
+  return shuffled;
 }
