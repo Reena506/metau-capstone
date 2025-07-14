@@ -120,15 +120,55 @@ router.delete("/:tripId/events/:eventId", isAuthenticated, async (req, res) => {
             return res.status(403).json({ error: "You can only delete your own events" })
         }
 
-        await prisma.event.delete({
-            where: { id: eventId }
-        })
+    await prisma.event.delete({
+      where: { id: eventId },
+    });
 
-        res.json({ message: "Event deleted successfully" })
-    } catch (error) {
-        console.error("Error deleting event:", error)
-        res.status(500).json({ error: "Something went wrong while deleting the event." })
-    }
-})
+    res.json({ message: "Event deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    res
+      .status(500)
+      .json({ error: "Something went wrong while deleting the event." });
+  }
+});
+
+router.post("/:tripId/events/batch", isAuthenticated, async (req, res) => {
+  const { tripId } = req.params;
+  const events = req.body.events;
+
+  if (!Array.isArray(events) || events.length === 0) {
+    return res.status(400).json({ error: "Events must be a non-empty array" });
+  }
+
+  try {
+    await prisma.$transaction(
+      events.map((event) => {
+        const { event: title, date, start_time, end_time, location } = event;
+
+        if (!title || !date || !start_time || !end_time || !location) {
+          throw new Error("Missing fields in one or more events");
+        }
+
+        return prisma.event.create({
+          data: {
+            event: title,
+            date,
+            start_time,
+            end_time,
+            location,
+            tripId: parseInt(tripId),
+            userId: req.session.userId,
+          },
+        });
+      })
+    );
+
+    res.status(201).json({ message: "All events created successfully" });
+  } catch (error) {
+    console.error("Error creating batch events:", error);
+    res.status(500).json({ error: "Failed to create events" });
+  }
+});
 
 module.exports = router;
