@@ -1,6 +1,6 @@
 import { useState } from "react"
 import React from 'react';
-// import '../styles/SignupForm.css'
+import './SignupForm.css'
 const APP_URL=import.meta.env.VITE_APP_URL
 
 const SignupForm = () => {
@@ -41,34 +41,37 @@ const SignupForm = () => {
         }
     }
 
-    return (
-        <form className="signup-form" onSubmit={handleSubmit}>
-            <label htmlFor="username">Username</label>
-            <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-            />
-            <label htmlFor="password">Password</label>
-            <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-            />
-            <div className="form-buttons">
-                <button type="submit">Sign Up</button>
-            </div>
-            {message && (
-                <div className={`message ${message.type}`}>
-                    {message.text}
-                </div>
-            )}
-        </form>
-    )
-}
+  return (
+    <form className="signup-form" onSubmit={handleSubmit}>
+      <label>
+        Username:
+        <input
+          type="text"
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+        />
+      </label>
 
-export default SignupForm
+      <label>
+        Password:
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+      </label>
+
+      <button type="submit">Sign Up</button>
+
+      {message && (
+        <div className={`message ${message.type}`}>{message.text}</div>
+      )}
+    </form>
+  );
+};
+
+export default SignupForm;
