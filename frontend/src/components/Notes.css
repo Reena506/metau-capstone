@@ -1,0 +1,168 @@
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.add-btn {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-btn:hover {
+  background-color: #0056b3;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.note-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px 16px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.05);
+}
+
+.note-content h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+}
+
+.note-text {
+  margin: 0;
+  font-size: 14px;
+  color: #444;
+  white-space: pre-wrap; 
+}
+
+.note-actions button {
+  margin-left: 8px;
+  background-color: #6c757d;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.note-actions button:hover {
+  background-color: #5a6268;
+}
+
+.note-actions button:first-child {
+  background-color: #007bff;
+}
+
+.note-actions button:first-child:hover {
+  background-color: #0056b3;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 6px;
+  width: 90%;
+  max-width: 400px;
+  box-sizing: border-box;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-content label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  font-size: 14px;
+}
+
+.modal-content input,
+.modal-content textarea {
+  margin-top: 6px;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.modal-content button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.modal-content button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+}
+
+.modal-content button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.modal-content button[type="button"] {
+  background-color: #6c757d;
+  color: white;
+}
+
+.modal-content button[type="button"]:hover {
+  background-color: #5a6268;
+}
+
+
+
+

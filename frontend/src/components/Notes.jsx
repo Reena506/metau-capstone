@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import './Notes.css'
 const APP_URL=import.meta.env.VITE_APP_URL
 
 function Notes() {
