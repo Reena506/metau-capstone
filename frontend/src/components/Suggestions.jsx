@@ -147,6 +147,7 @@ function Suggestions() {
           searchAttractions();
         }}
       >
+        {loading&&<div className="spinner"></div>}
         <input
           placeholder="Enter city"
           value={city}
