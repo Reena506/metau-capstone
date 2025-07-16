@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import './MyTrips.css'
 const APP_URL=import.meta.env.VITE_APP_URL
 
 
