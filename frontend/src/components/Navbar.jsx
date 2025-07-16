@@ -1,5 +1,6 @@
 import { useUser } from '../contexts/UserContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './Navbar.css'
 const APP_URL=import.meta.env.VITE_APP_URL
 
 const Navbar = () => {
