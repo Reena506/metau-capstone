@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { generateItinerary } from '../utils/generateItinerary';
+import "./Itinerary.css"; 
 
 const ItineraryModal = ({
   isOpen,
