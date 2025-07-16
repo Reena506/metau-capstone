@@ -1,35 +1,280 @@
-.bar-chart {
- display: flex;
- flex-direction: column;
- gap: 8px;
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem 2rem;
+  font-family: 'Segoe UI';
+  color: #333;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
 }
 
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #222;
+}
+
+.section {
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.05);
+}
+
+.budget-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.budget-row input[type="number"] {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  outline-offset: 2px;
+  transition: border-color 0.3s;
+}
+
+.budget-row input[type="number"]:focus {
+  border-color: #4a90e2;
+}
+
+.budget-row button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 0 1.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.budget-row button:hover {
+  background-color: #357ABD;
+}
+
+.budget-info {
+  display: flex;
+  justify-content: space-around;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #444;
+}
+
+.budget-info span {
+  min-width: 100px;
+  text-align: center;
+}
+
+.over-budget-suggestions {
+  background-color: #ffe6e6;
+  border: 1px solid #ff4d4d;
+  color: #b30000;
+}
+
+.over-budget-suggestions h3 {
+  margin-top: 0;
+}
+
+.over-budget-suggestions ul {
+  margin-top: 0.5rem;
+  padding-left: 1.2rem;
+}
+
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
 
 .bar-row {
- display: flex;
- align-items: center;
- gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
-
 
 .bar-label {
- width: 100px;
- font-weight: 500;
+  width: 100px;
+  font-weight: 600;
+  color: #555;
 }
 
+.bar-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #eee;
+  border-radius: 12px;
+  padding: 4px 8px;
+  position: relative;
+  height: 24px;
+}
+
+.bar-amount {
+  min-width: 60px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+  z-index: 2;
+  user-select: none;
+}
 
 .bar {
- height: 24px;
- color: white;
- padding-left: 10px;
- display: flex;
- align-items: center;
- border-radius: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 12px;
+  opacity: 0.85;
+  z-index: 1;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+form input,
+form select {
+  flex: 1 1 150px;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  outline-offset: 2px;
+  transition: border-color 0.3s;
+}
+
+form input[type="date"] {
+  max-width: 180px;
+}
+
+form input:focus,
+form select:focus {
+  border-color: #4a90e2;
+}
+
+.form-buttons {
+  flex-basis: 100%;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
+  margin-top: 0.5rem;
+}
+
+.form-buttons button {
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #4a90e2;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+.form-buttons button:hover {
+  background-color: #357ABD;
+}
+
+.form-buttons button[type="button"] {
+  background-color: #aaa;
+}
+
+.form-buttons button[type="button"]:hover {
+  background-color: #888;
+}
+
+.expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  background-color: #f1f1f1;
+  align-items: center;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+}
+
+.expense-info {
+  flex: 1;
+}
+
+.expense-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+  color: #333;
+}
+
+.expense-details {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.expense-actions button {
+  margin-left: 0.5rem;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  transition: background-color 0.3s;
+}
+.remaining-neg{
+    color:#b30000
+}
+.expense-actions button:hover {
+  background-color: #ddd;
+}
+
+.expense-actions button:first-child {
+  color: #4a90e2;
+  border-color: #4a90e2;
+}
+
+.expense-actions button:first-child:hover {
+  background-color: #357abd;
+  color: white;
+}
+
+.expense-actions button:last-child {
+  color: #d9534f;
+  border-color: #d9534f;
+}
+
+.expense-actions button:last-child:hover {
+  background-color: #c9302c;
+  color: white;
 }
 
 
-
-
-
-
-
+.tooltip {
+  position: fixed;
+  background-color: #333;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  max-width: 300px;
+  white-space: pre-line;
+  z-index: 9999;
+  pointer-events: none;
+}

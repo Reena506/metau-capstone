@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./ExpenseTracker.css";
+import BudgetSuggestions from "./BudgetSuggestions";
 
 const APP_URL = import.meta.env.VITE_APP_URL;
 
@@ -12,6 +13,12 @@ function ExpenseTracker() {
   const [expenses, setExpenses] = useState([]);
   const [budget, setBudget] = useState(0);
   const [budgetInput, setBudgetInput] = useState("");
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    content: "",
+    x: 0,
+    y: 0,
+  });
 
   // State for tracking if we are editing an expense
   const [editingExpense, setEditingExpense] = useState(null);
@@ -210,22 +217,36 @@ function ExpenseTracker() {
 
       {/* Budget Section */}
       <div className="section">
-        <div className="budget-row">
+        <form
+          className="budget-row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleBudgetUpdate();
+          }}
+        >
           <input
             type="number"
             value={budgetInput}
             onChange={(e) => setBudgetInput(e.target.value)}
             placeholder="Set budget"
           />
-          <button onClick={handleBudgetUpdate}>Save</button>
-        </div>
+          <button type="submit">Save</button>
+        </form>
+
         <div className="budget-info">
           <span>Budget: ${budget.toFixed(2)}</span>
           <span>Spent: ${totalSpent.toFixed(2)}</span>
-          <span>Remaining: ${remaining.toFixed(2)}</span>
+          <span className={remaining < 0 ? "remaining-neg" : "remaining-pos"}>
+            Remaining: ${remaining.toFixed(2)}
+          </span>
         </div>
       </div>
-
+      {/* Budget Suggestions */}
+      <BudgetSuggestions
+        expenses={expenses}
+        budget={budget}
+        categories={categories}
+      />
       {/* Bar Chart Section */}
       {chartData.length > 0 && (
         <div className="section">
@@ -234,21 +255,54 @@ function ExpenseTracker() {
             {chartData.map((item) => (
               <div key={item.category} className="bar-row">
                 <span className="bar-label">{item.category}</span>
-                <div
-                  className="bar"
-                  style={{
-                    width: `${(item.total / totalSpent) * 100}%`,
-                    backgroundColor: categoryColors[item.category],
-                  }}
-                >
-                  ${item.total.toFixed(2)}
+                <div className="bar-container">
+                  <div className="bar-amount">${item.total.toFixed(2)}</div>
+                  <div
+                    className="bar"
+                    style={{
+                      width: `${(item.total / totalSpent) * 100}%`,
+                      backgroundColor: categoryColors[item.category],
+                    }}
+                    onMouseEnter={(e) => {
+                      const breakdown = expenses
+                        .filter((exp) => exp.category === item.category)
+                        .map(
+                          (exp) =>
+                            `• ${exp.title}: $${parseFloat(exp.amount).toFixed(
+                              2
+                            )}`
+                        )
+                        .join("\n");
+
+                      setTooltip({
+                        visible: true,
+                        content: breakdown,
+                        x: e.clientX + 10,
+                        y: e.clientY + 10,
+                      });
+                    }}
+                    onMouseMove={(e) => {
+                      setTooltip((prev) => ({
+                        ...prev,
+                        x: e.clientX + 10,
+                        y: e.clientY + 10,
+                      }));
+                    }}
+                    onMouseLeave={() => {
+                      setTooltip({ visible: false, content: "", x: 0, y: 0 });
+                    }}
+                  ></div>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
+      {tooltip.visible && (
+        <div className="tooltip" style={{ top: tooltip.y, left: tooltip.x }}>
+          {tooltip.content}
+        </div>
+      )}
       {/* Expense Form */}
       <div className="section">
         <h3>{editingExpense ? "Edit Expense" : "Add Expense"}</h3>
@@ -339,3 +393,4 @@ function ExpenseTracker() {
 }
 
 export default ExpenseTracker;
+
