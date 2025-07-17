@@ -27,7 +27,19 @@ const Itinerary = () => {
     start_time: "",
     end_time: "",
     location: "",
+    hasExpense: false,
+    expenseTitle: "",
+    expenseAmount: "",
+    expenseCategory: "Activities",
   });
+  const expenseCategories = [
+    "Food",
+    "Transport",
+    "Lodging",
+    "Activities",
+    "Shopping",
+    "Other",
+  ];
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -41,7 +53,24 @@ const Itinerary = () => {
         if (!response.ok) throw new Error("Failed to fetch events");
 
         const eventsData = await response.json();
-        const transformedEvents = eventsData.map((event) => ({
+        const eventsWithExpenses = [];
+
+        for (const event of eventsData) {
+          try {
+            const expenseResponse = await fetch(
+              `${APP_URL}/trips/${tripId}/events/${event.id}/expenses`,
+              { credentials: "include" }
+            );
+            const expenses = expenseResponse.ok
+              ? await expenseResponse.json()
+              : [];
+            eventsWithExpenses.push({ ...event, expenses });
+          } catch {
+            eventsWithExpenses.push({ ...event, expenses: [] });
+          }
+        }
+
+        const transformedEvents = eventsWithExpenses.map((event) => ({
           id: event.id,
           title: event.event,
           start: new Date(event.start_time), //maps over events and converts into calendar friendly format
@@ -68,7 +97,7 @@ const Itinerary = () => {
     }
   }, [tripId]); //runs only when tripId changes
 
-  const handleNavigate = (date, view, action) => {
+  const handleNavigate = (date) => {
     setCurrentDate(date);
   };
 
@@ -90,16 +119,26 @@ const Itinerary = () => {
   };
 
   const handleSelectEvent = (event) => {
-    //user clicks on existing event to view and edit
     setSelectedEvent(event);
     setIsEditing(true);
-    setEventForm({
-      event: event.resource.originalEvent.event,
-      date: moment(event.resource.originalEvent.date).format("YYYY-MM-DD"),
+
+    const original = event.resource.originalEvent;
+    const expenses = original.expenses || [];
+    const firstExpense = expenses[0];
+
+    setEventForm((prev) => ({
+      ...prev,
+      event: original.event || "",
+      date: moment(original.date).format("YYYY-MM-DD"),
       start_time: moment(event.start).format("YYYY-MM-DDTHH:mm"),
       end_time: moment(event.end).format("YYYY-MM-DDTHH:mm"),
-      location: event.resource.originalEvent.location,
-    });
+      location: original.location || "",
+      hasExpense: !!firstExpense,
+      expenseTitle: firstExpense?.title || "",
+      expenseAmount: firstExpense?.amount?.toString() || "",
+      expenseCategory: firstExpense?.category || "Activities",
+    }));
+
     setShowEventModal(true);
   };
 
@@ -179,11 +218,26 @@ const Itinerary = () => {
     try {
       setLoading(true);
       const eventData = {
-        ...eventForm,
+        event: eventForm.event,
         date: new Date(eventForm.date).toISOString(),
         start_time: new Date(eventForm.start_time).toISOString(),
         end_time: new Date(eventForm.end_time).toISOString(),
+        location: eventForm.location,
       };
+
+      // Add expense data if the user wants to include an expense
+      if (
+        eventForm.hasExpense &&
+        eventForm.expenseTitle &&
+        eventForm.expenseAmount
+      ) {
+        eventData.expense = {
+          title: eventForm.expenseTitle,
+          amount: parseFloat(eventForm.expenseAmount),
+          category: eventForm.expenseCategory,
+          date: new Date(eventForm.date).toISOString(),
+        };
+      }
 
       const url =
         isEditing && selectedEvent
@@ -201,6 +255,7 @@ const Itinerary = () => {
 
       if (!response.ok) throw new Error("Failed to save event");
 
+      await response.json(); 
       await fetchAndUpdateEvents();
     } catch (err) {
       setError("Failed to save event");
@@ -237,14 +292,26 @@ const Itinerary = () => {
     }
   };
 
-  const EventComponent = (
-    { event } //shows title and location on calendar
-  ) => (
-    <div className="custom-event">
-      <strong>{event.title}</strong>
-      <div className="event-location">📍 {event.resource.location}</div>
-    </div>
-  );
+  const EventComponent = ({ event }) => {
+    const hasExpense =
+      event.resource.originalEvent.expenses &&
+      event.resource.originalEvent.expenses.length > 0;
+
+    return (
+      <div className={`custom-event ${hasExpense ? "has-expense" : ""}`}>
+        <strong>{event.title}</strong>
+        <div className="event-location">📍 {event.resource.location}</div>
+        {hasExpense && (
+          <div className="event-expense-indicator">
+            💰 $
+            {event.resource.originalEvent.expenses
+              .reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
+              .toFixed(2)}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="itinerary-calendar-container">
@@ -393,6 +460,71 @@ const Itinerary = () => {
                   required
                 />
               </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <input
+                    type="checkbox"
+                    name="hasExpense"
+                    checked={eventForm.hasExpense}
+                    onChange={(e) =>
+                      setEventForm((prev) => ({
+                        ...prev,
+                        hasExpense: e.target.checked,
+                        expenseTitle: e.target.checked ? prev.event || "" : "",
+                        expenseAmount: "",
+                        expenseCategory: "Activities",
+                      }))
+                    }
+                  />
+                  Add expense for this event
+                </label>
+              </div>
+
+              {eventForm.hasExpense && (
+                <div className="expense-fields">
+                  <div className="form-group">
+                    <label className="form-label">Expense Title</label>
+                    <input
+                      type="text"
+                      name="expenseTitle"
+                      value={eventForm.expenseTitle}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="e.g., Concert tickets, Restaurant bill"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Amount</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="expenseAmount"
+                      value={eventForm.expenseAmount}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Category</label>
+                    <select
+                      name="expenseCategory"
+                      value={eventForm.expenseCategory}
+                      onChange={handleInputChange}
+                      className="form-input"
+                    >
+                      {expenseCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               <div className="button-group">
                 {isEditing && (

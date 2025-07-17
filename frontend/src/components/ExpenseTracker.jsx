@@ -13,6 +13,7 @@ function ExpenseTracker() {
   const [expenses, setExpenses] = useState([]);
   const [budget, setBudget] = useState(0);
   const [budgetInput, setBudgetInput] = useState("");
+  const [events, setEvents] = useState([]);
   const [tooltip, setTooltip] = useState({
     visible: false,
     content: "",
@@ -49,12 +50,14 @@ function ExpenseTracker() {
     amount: "",
     category: categories[0],
     date: new Date().toISOString().split("T")[0], // today's date in YYYY-MM-DD
+    eventId: ""
   });
 
   // Fetch budget and expenses
   useEffect(() => {
     fetchBudget();
     fetchExpenses();
+    fetchEvents();
   }, [tripId]);
 
   // Fetch the budget for the trip
@@ -83,6 +86,18 @@ function ExpenseTracker() {
     }
   };
 
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch(`${APP_URL}/trips/${tripId}/events`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      setEvents(data || []);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+    }
+  };
+
   // Handle form input changes
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -94,7 +109,7 @@ function ExpenseTracker() {
   //adding or editing an expense
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { title, amount, category, date } = form;
+    const { title, amount, category, date, eventId } = form;
 
     // Validate inputs
     if (!title || !amount || !category || !date) {
@@ -118,6 +133,7 @@ function ExpenseTracker() {
           amount: parseFloat(amount),
           category,
           date,
+          eventId: eventId || null
         }),
       });
 
@@ -128,6 +144,7 @@ function ExpenseTracker() {
           amount: "",
           category: categories[0],
           date: new Date().toISOString().split("T")[0],
+          eventId: ""
         });
         setEditingExpense(null);
         fetchExpenses(); // refresh expense list
@@ -148,6 +165,7 @@ function ExpenseTracker() {
       amount: parseFloat(expense.amount),
       category: expense.category,
       date: expense.date.split("T")[0],
+      eventId: expense.eventId || ""
     });
   };
 
@@ -337,6 +355,19 @@ function ExpenseTracker() {
             onChange={handleChange}
             required
           />
+          <select 
+            name="eventId" 
+            value={form.eventId} 
+            onChange={handleChange}
+            className="event-select"
+          >
+            <option value="">No associated event</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.event} - {new Date(event.date).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
           <div className="form-buttons">
             <button type="submit">{editingExpense ? "Update" : "Add"}</button>
             {editingExpense && (
@@ -350,6 +381,7 @@ function ExpenseTracker() {
                     amount: "",
                     category: categories[0],
                     date: new Date().toISOString().split("T")[0],
+                    eventId: ""
                   });
                 }}
               >
@@ -372,16 +404,17 @@ function ExpenseTracker() {
                 <div className="expense-info">
                   <div className="expense-title">{expense.title}</div>
                   <div className="expense-details">
-                    ${parseFloat(expense.amount).toFixed(2)} •{" "}
-                    {expense.category} •{" "}
-                    {new Date(expense.date).toLocaleDateString()}
+                    ${parseFloat(expense.amount).toFixed(2)} • {expense.category} • {new Date(expense.date).toLocaleDateString()}
+                    {expense.event && (
+                      <div className="expense-event">
+                        🎫 {expense.event.event} @ {expense.event.location}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="expense-actions">
                   <button onClick={() => handleEdit(expense)}>Edit</button>
-                  <button onClick={() => handleDelete(expense.id)}>
-                    Delete
-                  </button>
+                  <button onClick={() => handleDelete(expense.id)}>Delete</button>
                 </div>
               </div>
             ))}
