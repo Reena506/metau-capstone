@@ -16,6 +16,17 @@ router.get("/:tripId/expenses", async (req, res) => {
   try {
     const expenses = await prisma.expense.findMany({
       where: { tripId: parseInt(req.params.tripId) },
+      include: {
+        event: {
+          select: {
+            id: true,
+            event: true,
+            date: true,
+            location: true
+          }
+        }
+      }
+
     });
     res.json(expenses);
   } catch (error) {
@@ -42,7 +53,7 @@ router.get("/:tripId/expenses/:expenseId", async (req, res) => {
 });
 
 router.post("/:tripId/expenses", isAuthenticated, async (req, res) => {
-  const { title, amount, category, date } = req.body;
+  const { title, amount, category, date, eventId } = req.body;
 
   if (!title || !amount || !category || !date) {
     return res.status(400).json({ error: "All fields are required" });
@@ -57,11 +68,12 @@ router.post("/:tripId/expenses", isAuthenticated, async (req, res) => {
     const newExpense = await prisma.expense.create({
       data: {
         title,
-        amount,
+        amount: parseFloat(amount),
         category,
         date:new Date(date),
         tripId: parseInt(req.params.tripId),
         userId: req.session.userId,
+        eventId: eventId ? parseInt(eventId):null
       },
     });
 
@@ -79,17 +91,18 @@ router.put(
   isAuthenticated,
   async (req, res) => {
     const { expenseId } = req.params;
-    const { title, amount, category, date } = req.body;
+    const { title, amount, category, date, eventId } = req.body;
     try {
       const updatedExpense = await prisma.expense.update({
         where: { id: parseInt(expenseId) },
         data: {
           title,
-          amount,
+          amount: parseFloat(amount),
           category,
           date:new Date(date),
           tripId: parseInt(req.params.tripId),
           userId: req.session.userId,
+          eventId: eventId ? parseInt(eventId):null
         },
       });
       res.json(updatedExpense);

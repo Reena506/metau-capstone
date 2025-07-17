@@ -54,6 +54,7 @@ model Event{
   trip   Trip @relation(fields: [tripId], references: [id])
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
+  expenses Expense[]
   
 }
 
@@ -67,8 +68,8 @@ model Expense{
   trip   Trip @relation(fields: [tripId], references: [id])
   userId Int 
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
-  
-  
+  eventId Int? 
+  event Event? @relation(fields: [eventId], references: [id])
 }
 
 model Note{
