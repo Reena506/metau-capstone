@@ -42,6 +42,7 @@ router.get("/:tripId/notes/:noteId", async (req, res) => {
 });
 
 router.post("/:tripId/notes", isAuthenticated, async (req, res) => {
+  const { tripId } = req.params;
   const { title, content } = req.body;
   if (!tripId) {
     return res.status(400).json({ error: "invalid trip ID" });

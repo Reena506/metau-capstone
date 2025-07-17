@@ -41,7 +41,7 @@ function Notes() {
     
     try {
       const url = editingNote 
-        ? `${APP_URL}/${tripId}/notes/${editingNote.id}`
+        ? `${APP_URL}/trips/${tripId}/notes/${editingNote.id}`
         : `${APP_URL}/trips/${tripId}/notes`;
       
       const method = editingNote ? "PUT" : "POST";
