@@ -5,6 +5,15 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
   const [budgetAlert, setBudgetAlert] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
 
+  const recommendedBudgetAllocations = {
+    Food: 30,
+    Transport: 10,
+    Lodging: 25,
+    Activities: 20,
+    Shopping: 10,
+    Other: 5,
+  };
+
   const analyzeBudget = () => {
     const totalSpent = expenses.reduce(
       //sums all expenses in order to find remaining and spentPercntage
@@ -191,7 +200,36 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
       }
     });
 
-    setSuggestions(newSuggestions.slice(0, 4)); // Limit to 4 suggestions 
+    //Recommended Allocation Suggestions
+    categorySpending.forEach((cat) => {
+      const recommended = recommendedBudgetAllocations[cat.category];
+      if (!recommended) return;
+
+      const actual = cat.percentage;
+      const deviation = actual - recommended;
+
+      if (Math.abs(deviation) > 5) {
+        newSuggestions.push({
+          type: "allocation",
+          title: `${cat.category} Budget Allocation Check`,
+          description: `${cat.category} is using ${actual.toFixed(
+            1
+          )}% of your budget. Recommended: ${recommended}%`,
+          items: [
+            deviation > 0
+              ? `You are spending ${deviation.toFixed(
+                  1
+                )}% more than recommended. Consider lowering expenses in this category.`
+              : `You're spending ${Math.abs(deviation).toFixed(
+                  1
+                )}% less than expected. This may be an opportunity to reallocate.`,
+          ],
+          priority: deviation > 10 ? "medium" : "low",
+        });
+      }
+    });
+
+    setSuggestions(newSuggestions.slice(0, 4));
   };
 
   // Find outlier expenses
@@ -277,14 +315,11 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
 
   return (
     <>
-      {/* Budget Alert */}
       {budgetAlert && (
         <div className={`budget-alert ${budgetAlert.level}`}>
           {budgetAlert.message}
         </div>
       )}
-
-      {/* Smart Suggestions */}
       {suggestions.length > 0 && (
         <div className="budget-suggestions-section">
           <h3>Budget Suggestions</h3>
