@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import './TripDetail.css'
+import {formatDate} from '../utils/dateUtils';
 const APP_URL=import.meta.env.VITE_APP_URL
 
 function TripDetail() {
@@ -20,8 +21,8 @@ function TripDetail() {
     
       <div className="trip-content">
         <h3>Trip Overview</h3>
-        <p>Start Date: {new Date(trip.start_date).toLocaleDateString()}</p>
-        <p>End Date: {new Date(trip.end_date).toLocaleDateString()}</p>
+        <p>Start Date: {formatDate(trip.start_date)}</p>
+        <p>End Date: {formatDate(trip.end_date)}</p>
       </div>
 
   );

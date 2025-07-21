@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./ExpenseTracker.css";
 import BudgetSuggestions from "./BudgetSuggestions";
+import {formatDate} from '../utils/dateUtils';
 
 const APP_URL = import.meta.env.VITE_APP_URL;
 
@@ -364,7 +365,7 @@ function ExpenseTracker() {
             <option value="">No associated event</option>
             {events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.event} - {new Date(event.date).toLocaleDateString()}
+                {event.event} - {formatDate(event.date)}
               </option>
             ))}
           </select>
@@ -404,7 +405,7 @@ function ExpenseTracker() {
                 <div className="expense-info">
                   <div className="expense-title">{expense.title}</div>
                   <div className="expense-details">
-                    ${parseFloat(expense.amount).toFixed(2)} • {expense.category} • {new Date(expense.date).toLocaleDateString()}
+                    ${parseFloat(expense.amount).toFixed(2)} • {expense.category} • {formatDate(expense.date)}
                     {expense.event && (
                       <div className="expense-event">
                         🎫 {expense.event.event} @ {expense.event.location}

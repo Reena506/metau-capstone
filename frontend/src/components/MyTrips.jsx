@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './MyTrips.css'
+import {formatDate} from '../utils/dateUtils';
 const APP_URL=import.meta.env.VITE_APP_URL
 
 
@@ -15,15 +16,6 @@ const MyTrips = () => {
   });
 
   const navigate = useNavigate();
-
-
-  const formatDate = (isoDate) => {
-    const date = new Date(isoDate);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${month}-${day}-${year}`;
-  };
 
 
   useEffect(() => {
