@@ -1,4 +1,5 @@
 import moment from "moment";
+const APP_URL = import.meta.env.VITE_APP_URL;
 
 const eventsPerDayMap = {
   //set number of activities per day
@@ -22,23 +23,82 @@ const activityNames = {
   nightlife: "Nightlife",
 };
 
-const activityPool = [
-  //possible activities and their duration/times also might change later
-  { type: "breakfast", duration: 60, early: "8:00", late: "9:00" },
-  { type: "morning_activity", duration: 150, early: "9:30", late: "10:30" },
-  { type: "cultural_site", duration: 120, early: "11:00", late: "12:00" },
-  { type: "lunch", duration: 90, early: "13:00", late: "14:00" },
-  { type: "afternoon_activity", duration: 120, early: "14:30", late: "15:30" },
-  { type: "outdoor_activity", duration: 180, early: "15:00", late: "16:00" },
-  { type: "afternoon_rest", duration: 120, early: "16:00", late: "17:00" },
-  { type: "shopping", duration: 90, early: "17:30", late: "18:30" },
-  { type: "dinner", duration: 90, early: "19:00", late: "20:00" },
-  { type: "evening_entertainment", duration: 120, early: "20:30", late: "21:30" },
-  { type: "nightlife", duration: 90, early: "22:00", late: "23:00" },
-];
+// Time slots for different activity types
+const activityTimeSlots = {
+  breakfast: { early: "8:00", late: "9:00" },
+  morning_activity: { early: "9:30", late: "10:30" },
+  cultural_site: { early: "11:00", late: "12:00" },
+  lunch: { early: "13:00", late: "14:00" },
+  afternoon_activity: { early: "14:30", late: "15:30" },
+  outdoor_activity: { early: "15:00", late: "16:00" },
+  afternoon_rest: { early: "16:00", late: "17:00" },
+  shopping: { early: "17:30", late: "18:30" },
+  dinner: { early: "19:00", late: "20:00" },
+  evening_entertainment: { early: "20:30", late: "21:30" },
+  nightlife: { early: "22:00", late: "23:00" },
+};
 
-export function generateItinerary(formData) {
-  //loops through each of the dates and calls generateDayEvents to create schedule
+// Budget-based activity filtering
+const budgetActivityFilters = {
+  budget: {
+    preferred: ["afternoon_rest", "outdoor_activity", "morning_activity"],
+    avoid: ["shopping", "evening_entertainment", "nightlife"],
+    maxDailyCost: 100
+  },
+  mid: {
+    preferred: ["cultural_site", "morning_activity", "afternoon_activity"],
+    avoid: [],
+    maxDailyCost: 250
+  },
+  luxury: {
+    preferred: ["evening_entertainment", "cultural_site", "shopping", "nightlife"],
+    avoid: ["afternoon_rest"],
+    maxDailyCost: 500
+  }
+};
+
+// Fetch places from Google Places API
+async function fetchPlacesForItinerary(destination, budget, goal) {
+  try {
+    const response = await fetch(
+      `${APP_URL}/suggestions/itinerary-places?city=${encodeURIComponent(destination)}&budget=${budget}&goal=${goal}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch places');
+    }
+    
+    const placesData = await response.json();
+    return placesData;
+  } catch (error) {
+    console.error('Error fetching places:', error);
+    return getFallbackActivityPool(budget);
+  }
+}
+
+// Fallback to hardcoded data if API fails
+function getFallbackActivityPool(budget) {
+  const fallbackCosts = {
+    budget: { breakfast: 10, lunch: 15, dinner: 20, cultural_site: 20, morning_activity: 15, afternoon_activity: 20, outdoor_activity: 10, shopping: 25, evening_entertainment: 15, nightlife: 20 },
+    mid: { breakfast: 25, lunch: 35, dinner: 50, cultural_site: 40, morning_activity: 35, afternoon_activity: 45, outdoor_activity: 30, shopping: 75, evening_entertainment: 40, nightlife: 45 },
+    luxury: { breakfast: 50, lunch: 70, dinner: 120, cultural_site: 80, morning_activity: 75, afternoon_activity: 90, outdoor_activity: 60, shopping: 200, evening_entertainment: 100, nightlife: 80 }
+  };
+
+  return {
+    breakfast: [{ name: "Local Breakfast Spot", estimated_cost: fallbackCosts[budget].breakfast, category: "breakfast" }],
+    lunch: [{ name: "Local Restaurant", estimated_cost: fallbackCosts[budget].lunch, category: "lunch" }],
+    dinner: [{ name: "Dinner Restaurant", estimated_cost: fallbackCosts[budget].dinner, category: "dinner" }],
+    cultural_site: [{ name: "Cultural Attraction", estimated_cost: fallbackCosts[budget].cultural_site, category: "cultural_site" }],
+    morning_activity: [{ name: "Morning Sightseeing", estimated_cost: fallbackCosts[budget].morning_activity, category: "morning_activity" }],
+    afternoon_activity: [{ name: "Afternoon Activity", estimated_cost: fallbackCosts[budget].afternoon_activity, category: "afternoon_activity" }],
+    outdoor_activity: [{ name: "Outdoor Activity", estimated_cost: fallbackCosts[budget].outdoor_activity, category: "outdoor_activity" }],
+    shopping: [{ name: "Shopping Area", estimated_cost: fallbackCosts[budget].shopping, category: "shopping" }],
+    evening_entertainment: [{ name: "Evening Entertainment", estimated_cost: fallbackCosts[budget].evening_entertainment, category: "evening_entertainment" }],
+    nightlife: [{ name: "Nightlife Venue", estimated_cost: fallbackCosts[budget].nightlife, category: "nightlife" }]
+  };
+}
+
+export async function generateItinerary(formData) {
   const {
     startDate,
     endDate,
@@ -47,12 +107,17 @@ export function generateItinerary(formData) {
     specificPlaces,
     destination,
     goal,
+    budget = 'mid'
   } = formData;
 
   const start = moment(startDate);
   const end = moment(endDate);
   const totalDays = end.diff(start, "days") + 1;
   const eventsPerDay = eventsPerDayMap[scheduleStyle];
+
+  // Fetch real places from Google Places API
+  const placesData = await fetchPlacesForItinerary(destination, budget, goal);
+  
   const generatedEvents = [];
 
   for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
@@ -63,7 +128,9 @@ export function generateItinerary(formData) {
       dailyStart,
       specificPlaces,
       destination,
-      goal
+      goal,
+      budget,
+      placesData
     );
     generatedEvents.push(...dayEvents);
   }
@@ -77,9 +144,12 @@ function generateDayEvents(
   dailyStart,
   specificPlaces,
   destination,
-  goal
+  goal,
+  budget,
+  placesData
 ) {
   const events = [];
+  const budgetConfig = budgetActivityFilters[budget];
 
   const specificForDay = specificPlaces.filter(
     (place) =>
@@ -103,6 +173,7 @@ function generateDayEvents(
       end_time: endTime.toISOString(),
       location: `${specificPlace.place}, ${destination}`,
       isSpecified: true,
+      estimatedCost: specificPlace.cost || 0
     });
   });
 
@@ -115,60 +186,44 @@ function generateDayEvents(
     return adjustOverlappingEvents(events);
   }
 
-  let filteredActivityPool = [...activityPool];
+  // Build activity pool from Google Places data
+  let availableActivities = [];
+  
+  Object.entries(placesData).forEach(([category, places]) => {
+    if (!places || places.length === 0) return;
+    
+    places.forEach(place => {
+      availableActivities.push({
+        ...place,
+        type: category,
+        duration: place.duration || 120
+      });
+    });
+  });
 
-  // goal filtering logic 
-  if (goal === "relax") {
-    // Prioritize relaxed activities but keep meals
-    filteredActivityPool = filteredActivityPool.filter((a) =>
-      [
-        "breakfast",
-        "lunch",
-        "dinner",
-        "afternoon_rest",
-        "shopping",
-        "morning_activity",
-      ].includes(a.type)
-    );
-  } else if (goal === "explore") {
-    // Prioritize exploration activities but keep meals
-    filteredActivityPool = filteredActivityPool.filter((a) =>
-      [
-        "breakfast",
-        "lunch",
-        "dinner",
-        "morning_activity",
-        "outdoor_activity",
-        "cultural_site",
-        "afternoon_activity",
-      ].includes(a.type)
-    );
-  } else if (goal === "food") {
-    // Prioritize food activities but include some sightseeing
-    filteredActivityPool = filteredActivityPool.filter((a) =>
-      [
-        "breakfast",
-        "lunch",
-        "dinner",
-        "morning_activity",
-        "shopping",
-        "cultural_site",
-      ].includes(a.type)
-    );
-  } else if (goal === "none") {
-    // Keep all activities available
-    filteredActivityPool = [...activityPool];
-  }
+  // Apply goal and budget filtering
+  availableActivities = filterActivitiesByGoalAndBudget(availableActivities, goal, budgetConfig);
 
-  const shuffled = shuffleArray(filteredActivityPool); //shuffles the pool
+  const shuffled = shuffleArray(availableActivities);
   let selected = [];
+  let dailyCost = 0;
 
   // Only add activities up to the remaining slots
   for (let i = 0; i < shuffled.length && selected.length < remainingSlots; i++) {
     const activity = shuffled[i];
-    const timeKey = dailyStart === "early" ? "early" : "late"; //sets time based on user preference
+    const activityCost = activity.estimated_cost || 0;
+    
+    // Check if adding this activity would exceed daily budget
+    if (dailyCost + activityCost > budgetConfig.maxDailyCost) {
+      continue;
+    }
+
+    const timeSlot = activityTimeSlots[activity.type];
+    if (!timeSlot) continue;
+
+    const timeKey = dailyStart === "early" ? "early" : "late";
     const startTime = moment(
-      `${currentDate.format("YYYY-MM-DD")} ${activity[timeKey]}`
+      `${currentDate.format("YYYY-MM-DD")} ${timeSlot[timeKey]}`
     );
     const endTime = moment(startTime).add(activity.duration, "minutes");
 
@@ -186,19 +241,61 @@ function generateDayEvents(
 
     if (!hasConflict) {
       events.push({
-        event: activityNames[activity.type],
+        event: activity.name,
         date: currentDate.toISOString(),
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
-        location: `${destination} - ${activity.type.replace("_", " ")}`,
+        location: activity.formatted_address || `${destination}`,
         isSpecified: false,
+        estimatedCost: activityCost,
+        place_id: activity.place_id,
+        rating: activity.rating,
+        category: activity.category
       });
       selected.push(activity);
+      dailyCost += activityCost;
     }
   }
 
   events.sort((a, b) => moment(a.start_time).diff(moment(b.start_time))); //sorts all events
   return adjustOverlappingEvents(events);
+}
+
+function filterActivitiesByGoalAndBudget(activities, goal, budgetConfig) {
+  let filtered = [...activities];
+
+  // Apply goal filtering
+  if (goal === "relax") {
+    filtered = filtered.filter((a) =>
+      ["breakfast", "lunch", "dinner", "afternoon_rest", "shopping", "morning_activity", "outdoor_activity"].includes(a.type)
+    );
+  } else if (goal === "explore") {
+    filtered = filtered.filter((a) =>
+      ["breakfast", "lunch", "dinner", "morning_activity", "outdoor_activity", "cultural_site", "afternoon_activity"].includes(a.type)
+    );
+  } else if (goal === "food") {
+    filtered = filtered.filter((a) =>
+      ["breakfast", "lunch", "dinner", "morning_activity", "shopping", "cultural_site"].includes(a.type)
+    );
+  }
+
+  // Sort by budget preference
+  filtered.sort((a, b) => {
+    const aPreferred = budgetConfig.preferred.includes(a.type);
+    const bPreferred = budgetConfig.preferred.includes(b.type);
+    const aAvoided = budgetConfig.avoid.includes(a.type);
+    const bAvoided = budgetConfig.avoid.includes(b.type);
+    
+    if (aPreferred && !bPreferred) return -1;
+    if (!aPreferred && bPreferred) return 1;
+    if (aAvoided && !bAvoided) return 1;
+    if (!aAvoided && bAvoided) return -1;
+    
+    // Sort by cost within the same preference level
+    return (a.estimated_cost || 0) - (b.estimated_cost || 0);
+  });
+
+  return filtered;
 }
 
 function adjustOverlappingEvents(events) {

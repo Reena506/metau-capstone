@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { generateItinerary } from '../utils/generateItinerary';
-import "./Itinerary.css"; 
+import "./Itinerary.css";
 
 const ItineraryModal = ({
   isOpen,
@@ -18,10 +18,12 @@ const ItineraryModal = ({
     dailyStart: 'early',
     specificPlaces: [{ place: '', day: '', time: '' }],
     destination: '',
-    goal: 'none'
+    goal: 'none',
+    budget: 'mid'
   });
 
   const [validationErrors, setValidationErrors] = useState({});
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -105,16 +107,23 @@ const ItineraryModal = ({
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-    
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       return;
     }
 
-    const generatedEvents = generateItinerary(formData);
-    onGenerate(generatedEvents);
+    setIsGenerating(true);
+    
+    try {
+      const generatedEvents = await generateItinerary(formData);
+      onGenerate(generatedEvents);
+    } catch (error) {
+      console.error('Error generating itinerary:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const resetForm = () => {
@@ -127,7 +136,8 @@ const ItineraryModal = ({
       dailyStart: 'early',
       specificPlaces: [{ place: '', day: '', time: '' }],
       destination: '',
-      goal: 'none' 
+      goal: 'none',
+      budget: 'mid'
     });
     setValidationErrors({});
   };
@@ -304,6 +314,23 @@ const ItineraryModal = ({
               <option value="food">Foodie</option>
             </select>
           </div>
+
+          <div className="form-group">
+            <label className="form-label">Budget Range</label>
+            <select
+              name="budget"
+              value={formData.budget}
+              onChange={handleInputChange}
+              className="form-input"
+            >
+              <option value="budget">Budget ($50-100/day)</option>
+              <option value="mid">Mid-Range ($100-250/day)</option>
+              <option value="luxury">Luxury ($250+/day)</option>
+            </select>
+            <div className="form-help-text">
+              This affects the types of activities and venues recommended for your trip.
+            </div>
+          </div>
         </div>
 
         <div className="form-section">
@@ -362,7 +389,7 @@ const ItineraryModal = ({
             type="button"
             onClick={handleClose}
             className="btn btn-secondary"
-            disabled={loading}
+            disabled={loading || isGenerating}
           >
             Cancel
           </button>
@@ -370,11 +397,17 @@ const ItineraryModal = ({
             type="button"
             onClick={handleSubmit}
             className="btn btn-primary"
-            disabled={loading}
+            disabled={loading || isGenerating}
           >
-            {loading ? 'Generating...' : 'Generate Itinerary'}
+            {isGenerating ? 'Generating...' : 'Generate Itinerary'}
           </button>
         </div>
+
+        {isGenerating && (
+          <div className="loading-message">
+            <p>Fetching real places and creating your personalized itinerary...</p>
+          </div>
+        )}
       </div>
     </div>
   );
