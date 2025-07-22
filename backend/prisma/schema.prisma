@@ -87,8 +87,10 @@ model Note{
 model Budget{
   id Int @id @default(autoincrement())
   amount Decimal @db.Money
+  allocations Json?
   tripId Int
   trip   Trip @relation(fields: [tripId], references: [id])
   userId Int
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
+  @@unique([tripId, userId])
 }
