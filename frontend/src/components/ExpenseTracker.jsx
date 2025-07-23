@@ -9,6 +9,7 @@ const APP_URL = import.meta.env.VITE_APP_URL;
 function ExpenseTracker() {
   // Get the tripId
   const { tripId } = useParams();
+  const [trip, setTrip] = useState(null);
 
   // State to store expenses and budget
   const [expenses, setExpenses] = useState([]);
@@ -59,6 +60,24 @@ function ExpenseTracker() {
     fetchBudget();
     fetchExpenses();
     fetchEvents();
+  }, [tripId]);
+
+  useEffect(() => {
+    const fetchTrip = async () => {
+      try {
+        const res = await fetch(`${APP_URL}/trips/${tripId}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setTrip(data);
+      } catch (error) {
+        console.error("Failed to fetch trip:", error);
+      }
+    };
+
+    if (tripId) {
+      fetchTrip();
+    }
   }, [tripId]);
 
   // Fetch the budget for the trip
@@ -261,11 +280,18 @@ function ExpenseTracker() {
         </div>
       </div>
       {/* Budget Suggestions */}
-      <BudgetSuggestions
-        expenses={expenses}
-        budget={budget}
-        categories={categories}
-      />
+      {trip ? (
+        <BudgetSuggestions
+          expenses={expenses}
+          budget={budget}
+          categories={categories}
+          tripId={tripId}
+          tripStart={trip.start_date}
+          tripEnd={trip.end_date}
+        />
+      ) : (
+        <div>Loading trip...</div>
+      )}
       {/* Bar Chart Section */}
       {chartData.length > 0 && (
         <div className="section">
