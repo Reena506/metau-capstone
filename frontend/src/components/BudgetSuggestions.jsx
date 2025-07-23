@@ -1,17 +1,110 @@
 import React, { useEffect, useState } from "react";
 import "./BudgetSuggestions.css";
-
-const BudgetSuggestions = ({ expenses, budget, categories }) => {
+import BudgetSettings from "./BudgetSettings";
+const APP_URL = import.meta.env.VITE_APP_URL;
+const BudgetSuggestions = ({ expenses, budget, categories, tripId, tripStart, tripEnd }) => {
   const [budgetAlert, setBudgetAlert] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [projectionAlert, setProjectionAlert]=useState(null);
 
-  const recommendedBudgetAllocations = {
+  const [recommendedBudgetAllocations, setRecommendedBudgetAllocations] = useState({
     Food: 30,
     Transport: 10,
     Lodging: 25,
     Activities: 20,
     Shopping: 10,
     Other: 5,
+  });
+  
+  // Load budget allocations from API
+  const loadBudgetAllocations = async () => {
+    if (!tripId) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`${APP_URL}/trips/${tripId}/budget-allocations`,{
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load budget allocations');
+      }
+      
+      const data = await response.json();
+      setRecommendedBudgetAllocations(data.allocations);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading budget allocations:', err);
+      setError('Failed to load budget allocations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save budget allocations to API
+  const saveBudgetAllocations = async (newAllocations) => {
+    if (!tripId) return false;
+    
+    try {
+      setLoading(true);
+      const response =  await fetch(`${APP_URL}/trips/${tripId}/budget-allocations`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials:'include',
+        body: JSON.stringify({
+          allocations: newAllocations
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save budget allocations');
+      }
+
+      const data = await response.json();
+      setRecommendedBudgetAllocations(data.allocations);
+      setError(null);
+      return true;
+    } catch (err) {
+      console.error('Error saving budget allocations:', err);
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset budget allocations to default
+  const resetBudgetAllocations = async () => {
+    if (!tripId) return false;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${APP_URL}/trips/${tripId}/budget-allocations`, {
+        method: 'DELETE',
+        credentials:'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reset budget allocations');
+      }
+
+      const data = await response.json();
+      setRecommendedBudgetAllocations(data.allocations);
+      setError(null);
+      return true;
+    } catch (err) {
+      console.error('Error resetting budget allocations:', err);
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const analyzeBudget = () => {
@@ -83,12 +176,7 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
   const generateSuggestions = (categorySpending, spentPercentage) => {
     const newSuggestions = [];
 
-    // Sort categories by spending (highest first)
-    const sortedCategories = [...categorySpending].sort(
-      (a, b) => b.total - a.total
-    );
-
-    // Identify outliers
+    // Find outliers
     const outliers = findOutliers();
     if (outliers.length > 0) {
       const totalOutlierSavings = outliers.reduce(
@@ -113,50 +201,49 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
       });
     }
 
-    //  Category rebalancing suggestions
-    if (sortedCategories.length > 1) {
-      const topCategory = sortedCategories[0]; //gets top category
-
-      if (topCategory.percentage > 40) {
-        //if top category is 40% or above of total budget suggest 20% reduction
-        const suggestedReduction = topCategory.total * 0.2;
+    // Dynamic category rebalancing based on allocations
+    categorySpending.forEach((cat) => {
+      const recommendedPercentage = recommendedBudgetAllocations[cat.category] || 0;
+      const actualPercentage = cat.percentage;
+      const deviation = actualPercentage - recommendedPercentage;
+     
+      // If spending significantly more than recommended allocation
+      if (deviation > 10) {
+        const excessAmount = (deviation / 100) * budget;
+        const suggestedReduction = excessAmount * 0.7; // Suggest reducing 70% of excess
+       
         newSuggestions.push({
           type: "rebalancing",
-          title: " Budget Rebalancing Opportunity",
-          description: `${
-            topCategory.category
-          } accounts for ${topCategory.percentage.toFixed(1)}% of your budget`,
+          title: `${cat.category} Budget Rebalancing`,
+          description: `${cat.category} is ${deviation.toFixed(1)}% over your target allocation (${actualPercentage.toFixed(1)}% vs ${recommendedPercentage}% recommended)`,
           items: [
-            `Consider reducing ${
-              topCategory.category
-            } spending by $${suggestedReduction.toFixed(2)}`,
-            `This would free up ${((suggestedReduction / budget) * 100).toFixed(
-              1
-            )}% of your budget`,
-            `Look for alternatives or bundle deals in ${topCategory.category}`,
+            `Consider reducing ${cat.category} spending by $${suggestedReduction.toFixed(2)}`,
+            `This would bring you closer to your ${recommendedPercentage}% target`,
+            `Look for alternatives or bundle deals in ${cat.category}`,
           ],
-          priority: topCategory.percentage > 50 ? "high" : "medium",
+          priority: deviation > 20 ? "high" : "medium",
         });
       }
-    }
+    });
 
-    //  Frequency-based suggestions
-    //if there are more than 3 in a category and avg is obove 50 it is a frequent expense
+    //frequency-based suggestions using allocations
     const frequentCategories = categorySpending.filter((cat) => cat.count >= 3);
     frequentCategories.forEach((cat) => {
       const avgExpense = cat.total / cat.count;
-      if (avgExpense > 50) {
+      const recommendedPercentage = recommendedBudgetAllocations[cat.category] || 0;
+      const recommendedTotal = (recommendedPercentage / 100) * budget;
+      const recommendedAvg = cat.count > 0 ? recommendedTotal / cat.count : 0;
+     
+      // If average expense is significantly higher than what the allocation would suggest
+      if (avgExpense > recommendedAvg * 1.3) {
+        const targetAverage = recommendedAvg;
         newSuggestions.push({
           type: "frequency",
-          title: " Frequent Expense Optimization",
-          description: `You have ${cat.count} ${
-            cat.category
-          } expenses averaging $${avgExpense.toFixed(2)}`,
+          title: `${cat.category} Frequent Expense Optimization`,
+          description: `Your ${cat.count} ${cat.category} expenses average $${avgExpense.toFixed(2)}, above your target of $${targetAverage.toFixed(2)} per expense`,
           items: [
+            `Try to limit each ${cat.category} expense to $${targetAverage.toFixed(2)}`,
             `Look for bulk discounts or packages for ${cat.category}`,
-            `Consider setting a daily limit of $${(avgExpense * 0.8).toFixed(
-              2
-            )} for ${cat.category}`,
             `Research alternative options in ${cat.category}`,
           ],
           priority: "medium",
@@ -166,41 +253,42 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
 
     //  Emergency suggestions for critical budget status
     if (spentPercentage >= 90) {
+      // Identify categories that are most over budget to prioritize cuts
+      const overBudgetCategories = categorySpending
+        .filter(cat => {
+          const recommended = recommendedBudgetAllocations[cat.category] || 0;
+          return cat.percentage > recommended;
+        })
+        .sort((a, b) => {
+          const aDeviation = a.percentage - (recommendedBudgetAllocations[a.category] || 0);
+          const bDeviation = b.percentage - (recommendedBudgetAllocations[b.category] || 0);
+          return bDeviation - aDeviation;
+        });
+
+      const emergencyItems = [
+        "Pause all non-essential purchases",
+        "Review and cancel any planned activities",
+        "Look for free alternatives for remaining activities",
+      ];
+
+      // Add specific suggestions for most over-budget categories
+      if (overBudgetCategories.length > 0) {
+        const topOverspender = overBudgetCategories[0];
+        emergencyItems.push(`Immediately reduce ${topOverspender.category} spending - it's your biggest overspend`);
+      }
+
+      emergencyItems.push(...getCategorySpecificEmergencyTips(overBudgetCategories));
+
       newSuggestions.push({
         type: "emergency",
-        title: " Emergency Budget Actions",
+        title: "Emergency Budget Actions",
         description: "Immediate actions needed to stay within budget",
-        items: [
-          "Pause all non-essential purchases",
-          "Review and cancel any planned activities",
-          "Look for free alternatives for remaining activities",
-          "Consider cooking instead of dining out",
-          "Use public transport instead of ubers/lyfts",
-        ],
+        items: emergencyItems.slice(0, 6), // Limit to 6 items
         priority: "critical",
       });
     }
 
-    //  category-specific suggestions
-    //if a category is more than 25% of sbudget provide specific suggestiosn
-    categorySpending.forEach((cat) => {
-      if (cat.percentage > 25) {
-        const categoryTips = getCategorySpecificTips(cat.category, cat.total);
-        if (categoryTips.length > 0) {
-          newSuggestions.push({
-            type: "category-specific",
-            title: ` ${cat.category} Optimization Tips`,
-            description: `${cat.category} is ${cat.percentage.toFixed(
-              1
-            )}% of your budget`,
-            items: categoryTips,
-            priority: "medium",
-          });
-        }
-      }
-    });
-
-    //Recommended Allocation Suggestions
+    // Enhanced allocation-based suggestions
     categorySpending.forEach((cat) => {
       const recommended = recommendedBudgetAllocations[cat.category];
       if (!recommended) return;
@@ -209,31 +297,73 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
       const deviation = actual - recommended;
 
       if (Math.abs(deviation) > 5) {
+        const items = [];
+       
+        if (deviation > 0) {
+          const excessAmount = (deviation / 100) * budget;
+          items.push(
+            `You're spending $${excessAmount.toFixed(2)} more than your ${recommended}% target`,
+            `Consider reducing expenses by $${(excessAmount * 0.6).toFixed(2)} to get back on track`
+          );
+          items.push(...getCategorySpecificTips(cat.category).slice(0, 2));
+        } else {
+          const underAmount = Math.abs((deviation / 100) * budget);
+          items.push(
+            `You're ${Math.abs(deviation).toFixed(1)}% under budget in ${cat.category}`,
+            `You could reallocate $${underAmount.toFixed(2)} from other categories or enjoy more ${cat.category} experiences`
+          );
+        }
+
         newSuggestions.push({
           type: "allocation",
           title: `${cat.category} Budget Allocation Check`,
-          description: `${cat.category} is using ${actual.toFixed(
-            1
-          )}% of your budget. Recommended: ${recommended}%`,
-          items: [
-            deviation > 0
-              ? `You are spending ${deviation.toFixed(
-                  1
-                )}% more than recommended. Consider lowering expenses in this category.`
-              : `You're spending ${Math.abs(deviation).toFixed(
-                  1
-                )}% less than expected. This may be an opportunity to reallocate.`,
-          ],
-          priority: deviation > 10 ? "medium" : "low",
+          description: `${cat.category}: ${actual.toFixed(1)}% actual vs ${recommended}% target`,
+          items: items,
+          priority: Math.abs(deviation) > 15 ? "medium" : "low",
         });
       }
     });
 
-    setSuggestions(newSuggestions.slice(0, 4));
+    // reallocation suggestions between categories
+    const overBudgetCats = categorySpending.filter(cat => {
+      const recommended = recommendedBudgetAllocations[cat.category] || 0;
+      return cat.percentage > recommended + 5;
+    });
+
+    const underBudgetCats = categorySpending.filter(cat => {
+      const recommended = recommendedBudgetAllocations[cat.category] || 0;
+      return cat.percentage < recommended - 5;
+    });
+
+    if (overBudgetCats.length > 0 && underBudgetCats.length > 0) {
+      const topOver = overBudgetCats[0];
+      const topUnder = underBudgetCats[0];
+      const suggestedTransfer = Math.min(
+        (topOver.percentage - recommendedBudgetAllocations[topOver.category]) / 2,
+        (recommendedBudgetAllocations[topUnder.category] - topUnder.percentage) / 2
+      );
+      const transferAmount = (suggestedTransfer / 100) * budget;
+
+      if (transferAmount > 10) { // Only suggest if meaningful amount
+        newSuggestions.push({
+          type: "reallocation",
+          title: "Smart Budget Reallocation",
+          description: `Balance your spending between categories`,
+          items: [
+            `Consider moving $${transferAmount.toFixed(2)} from ${topOver.category} to ${topUnder.category}`,
+            `This would better align with your target allocations`,
+            `${topOver.category} would go from ${topOver.percentage.toFixed(1)}% to ${(topOver.percentage - suggestedTransfer).toFixed(1)}%`,
+            `${topUnder.category} would go from ${topUnder.percentage.toFixed(1)}% to ${(topUnder.percentage + suggestedTransfer).toFixed(1)}%`
+          ],
+          priority: "medium",
+        });
+      }
+    }
+
+    setSuggestions(newSuggestions.slice(0, 5)); // Increased to 5 suggestions
   };
 
-  // Find outlier expenses
-  //if there are more than 2 expenses in the category, find the average of the expenses, if an expense is 50% above the average, it is an outlier
+  // Enhanced outlier detection using category allocations
   const findOutliers = () => {
     const outliers = [];
 
@@ -244,9 +374,13 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
       if (categoryExpenses.length < 2) return;
 
       const amounts = categoryExpenses.map((exp) => parseFloat(exp.amount));
-      const average =
-        amounts.reduce((sum, amt) => sum + amt, 0) / amounts.length;
-      const threshold = average * 1.5; // 50% above average
+      const average = amounts.reduce((sum, amt) => sum + amt, 0) / amounts.length;
+     
+      // Use allocation-based threshold: if category has higher allocation, allow higher variance
+      const recommendedPercentage = recommendedBudgetAllocations[category] || 5;
+      const baseThreshold = 1.5; // 50% above average
+      const allocationMultiplier = Math.max(0.8, Math.min(1.5, recommendedPercentage / 20)); // Scale based on allocation
+      const threshold = average * (baseThreshold * allocationMultiplier);
 
       categoryExpenses.forEach((expense) => {
         const amount = parseFloat(expense.amount);
@@ -264,6 +398,56 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
 
     return outliers.sort((a, b) => b.potentialSaving - a.potentialSaving);
   };
+
+  // Get emergency tips based on over-budget categories
+  const getCategorySpecificEmergencyTips = (overBudgetCategories) => {
+    const tips = [];
+    overBudgetCategories.slice(0, 2).forEach(cat => {
+      const categoryTips = {
+        Food: ["Cook instead of dining out", "Look for happy hour specials"],
+        Transport: ["Use public transport only", "Walk when possible"],
+        Lodging: ["Avoid room service/extras", "Look for immediate check-out savings"],
+        Activities: ["Cancel paid activities", "Find free alternatives"],
+        Shopping: ["Stop all shopping immediately", "Return recent purchases if possible"],
+        Other: ["Cut all miscellaneous expenses", "Postpone non-essentials"]
+      };
+     
+      const categorySpecificTips = categoryTips[cat.category] || [`Reduce ${cat.category} spending immediately`];
+      tips.push(...categorySpecificTips);
+    });
+   
+    return tips;
+  };
+  const predictOverspending = () => {
+  if (!tripStart || !tripEnd || expenses.length === 0) return;
+
+  const start = new Date(tripStart);
+  const end = new Date(tripEnd); 
+  const now = new Date();
+
+  const totalTripDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+  const daysElapsed = Math.max(1, Math.ceil((now - start) / (1000 * 60 * 60 * 24)));
+
+  const totalSpent = expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const avgDailySpend = totalSpent / daysElapsed;
+  const projectedTotalSpend = avgDailySpend * totalTripDays;
+
+  const overrun = projectedTotalSpend - budget;
+
+  if (projectedTotalSpend > budget) {
+    setProjectionAlert({
+      level: "high",
+      message: `At your current rate, you'll exceed your budget by $${overrun.toFixed(2)}. Consider adjusting your spending pace.`,
+    });
+  } else {
+    setProjectionAlert(null);
+  }
+};
+
+
+useEffect(()=>{
+  predictOverspending();
+},[expenses, tripStart, tripEnd])
 
   // Get category-specific money-saving tips
   const getCategorySpecificTips = (category) => {
@@ -308,21 +492,67 @@ const BudgetSuggestions = ({ expenses, budget, categories }) => {
     return tips[category] || [];
   };
 
-  // Run budget analysis whenever expenses or budget changes
+  const handleSaveAllocations = async (newAllocations) => {
+    const success = await saveBudgetAllocations(newAllocations);
+    return success;
+  };
+
+  const handleResetAllocations = async () => {
+    const success = await resetBudgetAllocations();
+    return success;
+  };
+
   useEffect(() => {
-    analyzeBudget();
-  }, [expenses, budget]);
+    loadBudgetAllocations();
+  }, [tripId]);
+
+  // Run budget analysis whenever expenses, budget, or allocations change
+  useEffect(() => {
+    if (Object.keys(recommendedBudgetAllocations).length > 0) {
+      analyzeBudget();
+    }
+  }, [expenses, budget, recommendedBudgetAllocations]);
 
   return (
     <>
+      {error && (
+        <div className="budget-error">
+          {error}
+        </div>
+      )}
       {budgetAlert && (
         <div className={`budget-alert ${budgetAlert.level}`}>
           {budgetAlert.message}
         </div>
       )}
+      {projectionAlert&&(
+        <div className="budget-alert predictive">
+          {projectionAlert.message}
+        </div>
+      )}
+      {/* settings */}
+      <div className="budget-suggestions-header">
+        <h3>Budget Suggestions</h3>
+        <button
+          className="setttings-btn"
+          onClick={() => setShowSettings(true)}
+          title="Customize budget allocations"
+          disabled={loading}
+        >
+          {loading ? 'Loading...' : 'Customize Budget Allocation'}
+        </button>
+      </div>
+      <BudgetSettings
+        allocations={recommendedBudgetAllocations}
+        onSave={handleSaveAllocations}
+        onReset={handleResetAllocations}
+        categories={categories}
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        loading={loading}
+      />
       {suggestions.length > 0 && (
         <div className="budget-suggestions-section">
-          <h3>Budget Suggestions</h3>
           <div className="suggestions-container">
             {suggestions.map((suggestion, index) => (
               <div
