@@ -117,8 +117,9 @@ const ItineraryModal = ({
     setIsGenerating(true);
     
     try {
-      const generatedEvents = await generateItinerary(formData);
-      onGenerate(generatedEvents);
+      const generatedData = await generateItinerary(formData);
+      const eventsToPass = generatedData.events || generatedData;
+      onGenerate(eventsToPass);
     } catch (error) {
       console.error('Error generating itinerary:', error);
     } finally {

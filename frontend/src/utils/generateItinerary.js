@@ -57,6 +57,232 @@ const budgetActivityFilters = {
   }
 };
 
+// Weather-based activity filtering
+const weatherActivityRules = {
+  outdoor_activity: {
+    avoid: ['rain', 'thunderstorm', 'snow'],
+    preferredTemp: { min: 59, max: 95 }, 
+    maxWindSpeed: 12 
+  },
+  morning_activity: {
+    avoid: ['thunderstorm', 'heavy_rain'],
+    preferredTemp: { min: 50, max: 100 }
+  },
+  cultural_site: {
+    avoid: ['severe_thunderstorm'],
+    backup: true // Good fallback for bad weather
+  },
+  shopping: {
+    avoid: ['severe_thunderstorm'],
+    backup: true
+  },
+  evening_entertainment: {
+    avoid: ['severe_thunderstorm'],
+    preferredTemp: { min: 40, max: 100 }
+  },
+  afternoon_rest: {
+    backup: true // for any weather
+  }
+};
+
+// Fetch weather forecast for the destination
+async function fetchWeatherForecast(destination, startDate, endDate) {
+  try {
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(destination)}&appid=${apiKey}&units=imperial`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch weather data');
+    }
+    
+    const forecastData = await response.json();
+    
+    // Process forecast data 
+    return processForecastData(forecastData, startDate, endDate);
+    
+  } catch (error) {
+    console.error('Weather API error:', error);
+    return null; 
+  }
+}
+
+// Process raw weather data into usable daily summaries
+function processForecastData(forecastData, startDate, endDate) {
+  const dailyWeather = {};
+  const start = moment(startDate);
+  const end = moment(endDate);
+  
+  forecastData.list.forEach(item => {
+    const date = moment(item.dt * 1000).format('YYYY-MM-DD');
+    const itemDate = moment(date);
+    
+    // Only include dates within trip range
+    if (itemDate.isBetween(start, end, 'day', '[]')) {
+      if (!dailyWeather[date]) {
+        dailyWeather[date] = {
+          conditions: [],
+          temps: [],
+          windSpeeds: [],
+          precipitation: 0
+        };
+      }
+      
+      dailyWeather[date].conditions.push(item.weather[0].main.toLowerCase());
+      dailyWeather[date].temps.push(item.main.temp);
+      dailyWeather[date].windSpeeds.push(item.wind?.speed || 0);
+      
+      if (item.rain) dailyWeather[date].precipitation += item.rain['3h'] || 0;
+      if (item.snow) dailyWeather[date].precipitation += item.snow['3h'] || 0;
+    }
+  });
+  
+  // Create daily summaries
+  const processedWeather = {};
+  Object.keys(dailyWeather).forEach(date => {
+    const day = dailyWeather[date];
+    processedWeather[date] = {
+      condition: getMostFrequentCondition(day.conditions),
+      avgTemp: day.temps.reduce((a, b) => a + b) / day.temps.length,
+      maxTemp: Math.max(...day.temps),
+      minTemp: Math.min(...day.temps),
+      avgWindSpeed: day.windSpeeds.reduce((a, b) => a + b) / day.windSpeeds.length,
+      precipitation: day.precipitation,
+      isGoodWeather: isGoodWeatherDay(day)
+    };
+  });
+  
+  return processedWeather;
+}
+
+function getMostFrequentCondition(conditions) {
+  const counts = {};
+  conditions.forEach(condition => {
+    counts[condition] = (counts[condition] || 0) + 1;
+  });
+  
+  return Object.keys(counts).reduce((a, b) => 
+    counts[a] > counts[b] ? a : b
+  );
+}
+
+function isGoodWeatherDay(dayData) {
+  const avgTemp = dayData.temps.reduce((a, b) => a + b) / dayData.temps.length;
+  const hasStorm = dayData.conditions.some(c => c.includes('thunderstorm'));
+  const heavyRain = dayData.precipitation > 0.4; // inches
+  
+  return !hasStorm && !heavyRain && avgTemp > 41 && avgTemp < 104;
+}
+
+// activity filtering with weather
+function filterActivitiesByWeatherAndBudget(activities, goal, budgetConfig, weatherData, currentDate) {
+  
+  let filtered = filterActivitiesByGoalAndBudget(activities, goal, budgetConfig);
+  
+  // If no weather data available, return original filtering
+  if (!weatherData) return filtered;
+  
+  const dateStr = moment(currentDate).format('YYYY-MM-DD');
+  const dayWeather = weatherData[dateStr];
+  
+  if (!dayWeather) return filtered;
+  
+  // Filter based on weather conditions
+  filtered = filtered.filter(activity => {
+    const rules = weatherActivityRules[activity.type];
+    if (!rules) return true; // No rules = always allowed
+    
+    // Check if weather conditions should avoid this activity
+    const shouldAvoid = rules.avoid?.some(condition => {
+      if (condition === 'rain' && dayWeather.precipitation > 0.08) return true; // > 0.08 inches
+      if (condition === 'heavy_rain' && dayWeather.precipitation > 0.4) return true; // > 0.4 inches
+      if (condition === 'thunderstorm' && dayWeather.condition.includes('thunderstorm')) return true;
+      if (condition === 'severe_thunderstorm' && dayWeather.condition.includes('thunderstorm') && dayWeather.avgWindSpeed > 18) return true;
+      if (condition === 'snow' && dayWeather.condition.includes('snow')) return true;
+      return false;
+    });
+    
+    if (shouldAvoid) return false;
+    
+    // Check temperature preferences
+    if (rules.preferredTemp) {
+      const { min, max } = rules.preferredTemp;
+      if (dayWeather.avgTemp < min || dayWeather.avgTemp > max) {
+        return false;
+      }
+    }
+    
+    // Check wind speed
+    if (rules.maxWindSpeed && dayWeather.avgWindSpeed > rules.maxWindSpeed) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // If bad weather eliminated too many options, add backup activities
+  if (!dayWeather.isGoodWeather && filtered.length < 3) {
+    const backupActivities = activities.filter(activity => 
+      weatherActivityRules[activity.type]?.backup
+    );
+    filtered = [...filtered, ...backupActivities.slice(0, 3)];
+  }
+  
+  return filtered;
+}
+
+//  explain why an activity was chosen based on weather
+function getActivityWeatherReason(activityType, weatherInfo) {
+  if (!weatherInfo) return null;
+  
+  const temp = weatherInfo.temperature;
+  const condition = weatherInfo.condition;
+  
+  if (condition.includes('rain') || condition.includes('storm')) {
+    if (['cultural_site', 'shopping', 'afternoon_rest'].includes(activityType)) {
+      return "Indoor activity recommended due to rain";
+    }
+  }
+  
+  if (temp > 86) {
+    if (['cultural_site', 'shopping'].includes(activityType)) {
+      return "Indoor activity recommended due to high temperature";
+    }
+  }
+  
+  if (temp < 41) {
+    if (['cultural_site', 'shopping', 'evening_entertainment'].includes(activityType)) {
+      return "Indoor activity recommended due to cold weather";
+    }
+  }
+  
+  if (condition === 'clear' && temp > 59 && temp < 82) {
+    if (['outdoor_activity', 'morning_activity'].includes(activityType)) {
+      return "Perfect weather for outdoor activities!";
+    }
+  }
+  
+  return null;
+}
+
+export function getWeatherSummary(weatherData, date) {
+  const dateStr = moment(date).format('YYYY-MM-DD');
+  const dayWeather = weatherData?.[dateStr];
+  
+  if (!dayWeather) return null;
+  
+  return {
+    condition: dayWeather.condition,
+    temperature: Math.round(dayWeather.avgTemp),
+    precipitation: dayWeather.precipitation,
+    recommendation: dayWeather.isGoodWeather ? 
+      "Great weather for outdoor activities!" : 
+      "Consider indoor alternatives"
+  };
+}
+
 // Fetch places from Google Places API
 async function fetchPlacesForItinerary(destination, budget, goal) {
   try {
@@ -115,13 +341,22 @@ export async function generateItinerary(formData) {
   const totalDays = end.diff(start, "days") + 1;
   const eventsPerDay = eventsPerDayMap[scheduleStyle];
 
-  // Fetch real places from Google Places API
-  const placesData = await fetchPlacesForItinerary(destination, budget, goal);
-  
+  // Fetch weather forecast and places data simultaneously using the existing destination input
+  const [placesData, weatherData] = await Promise.all([
+    fetchPlacesForItinerary(destination, budget, goal),
+    fetchWeatherForecast(destination, startDate, endDate)
+  ]);
+
   const generatedEvents = [];
+  const weatherSummary = {};
 
   for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
     const currentDate = moment(start).add(dayIndex, "days");
+    const dateStr = currentDate.format('YYYY-MM-DD');
+    
+    // Store weather summary for each day
+    weatherSummary[dateStr] = getWeatherSummary(weatherData, currentDate);
+    
     const dayEvents = generateDayEvents(
       currentDate,
       eventsPerDay,
@@ -130,12 +365,19 @@ export async function generateItinerary(formData) {
       destination,
       goal,
       budget,
-      placesData
+      placesData,
+      weatherData
     );
     generatedEvents.push(...dayEvents);
   }
 
-  return generatedEvents;
+  // Return both events and weather data for the frontend
+  return {
+    events: generatedEvents,
+    weatherSummary,
+    destination,
+    totalDays
+  };
 }
 
 function generateDayEvents(
@@ -146,7 +388,8 @@ function generateDayEvents(
   destination,
   goal,
   budget,
-  placesData
+  placesData,
+  weatherData
 ) {
   const events = [];
   const budgetConfig = budgetActivityFilters[budget];
@@ -201,8 +444,14 @@ function generateDayEvents(
     });
   });
 
-  // Apply goal and budget filtering
-  availableActivities = filterActivitiesByGoalAndBudget(availableActivities, goal, budgetConfig);
+  // Apply weather filtering 
+  availableActivities = filterActivitiesByWeatherAndBudget(
+    availableActivities, 
+    goal, 
+    budgetConfig, 
+    weatherData, 
+    currentDate
+  );
 
   const shuffled = shuffleArray(availableActivities);
   let selected = [];
@@ -240,6 +489,9 @@ function generateDayEvents(
     });
 
     if (!hasConflict) {
+      // Add weather context to the event
+      const weatherInfo = getWeatherSummary(weatherData, currentDate);
+      
       events.push({
         event: activity.name,
         date: currentDate.toISOString(),
@@ -250,7 +502,9 @@ function generateDayEvents(
         estimatedCost: activityCost,
         place_id: activity.place_id,
         rating: activity.rating,
-        category: activity.category
+        category: activity.category,
+        weatherOptimized: !!weatherInfo, // Flag to show this was weather-optimized
+        weatherReason: weatherInfo ? getActivityWeatherReason(activity.type, weatherInfo) : null
       });
       selected.push(activity);
       dailyCost += activityCost;
