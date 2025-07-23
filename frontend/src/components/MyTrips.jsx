@@ -24,7 +24,7 @@ const MyTrips = () => {
         credentials: "include"
       });
       const data = await res.json();
-      setTrips(data);
+      setTrips(Array.isArray(data) ? data:data.trips||[]);
     };
 
 

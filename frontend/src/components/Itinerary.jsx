@@ -114,6 +114,10 @@ const Itinerary = () => {
       start_time: moment(start).format("YYYY-MM-DDTHH:mm"),
       end_time: moment(end).format("YYYY-MM-DDTHH:mm"),
       location: "",
+      hasExpense: false,
+      expenseTitle:"",
+      expenseAmount:"",
+      expenseCategory:"Activities"
     });
     setShowEventModal(true);
   };
@@ -180,7 +184,7 @@ const Itinerary = () => {
     }
   };
 
-  const handleGenerateItinerary = async (generatedEvents) => {
+  const handleGenerateItinerary = async (generatedData) => {
     try {
       setLoading(true);
       setError("");
@@ -189,7 +193,7 @@ const Itinerary = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ events: generatedEvents }),
+        body: JSON.stringify({ events: generatedData.events||generatedData }),
       });
 
       if (!response.ok) {
