@@ -51,7 +51,7 @@ model Event{
   end_time DateTime
   location String
   tripId Int
-  trip   Trip @relation(fields: [tripId], references: [id])
+  trip   Trip @relation(fields: [tripId], references: [id],onDelete: Cascade)
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
   expenses Expense[]
@@ -65,7 +65,7 @@ model Expense{
   category String
   date DateTime @db.Date
   tripId Int
-  trip   Trip @relation(fields: [tripId], references: [id])
+  trip   Trip @relation(fields: [tripId], references: [id],onDelete: Cascade)
   userId Int 
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
   eventId Int? 
@@ -77,7 +77,7 @@ model Note{
   title String
   content String
   tripId Int
-  trip   Trip @relation(fields: [tripId], references: [id])
+  trip   Trip @relation(fields: [tripId], references: [id],onDelete: Cascade)
   userId Int
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
   
@@ -89,7 +89,7 @@ model Budget{
   amount Decimal @db.Money
   allocations Json?
   tripId Int
-  trip   Trip @relation(fields: [tripId], references: [id])
+  trip   Trip @relation(fields: [tripId], references: [id],onDelete: Cascade)
   userId Int
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
   @@unique([tripId, userId])
