@@ -9,7 +9,7 @@ const BudgetSettings = ({
   isOpen,
   onClose,
   loading=false,
-
+  tripId,
 }) => {
   const [tempAllocations, setTempAllocations] = useState(allocations);
   const [showPresets, setShowPresets] = useState(false);
@@ -23,7 +23,10 @@ const BudgetSettings = ({
   const loadPresets = async () => {
     try {
       setLoadingPresets(true);
-      const response = await fetch(`${APP_URL}/trips/allocation-presets`, {
+      const url = tripId
+        ? `${APP_URL}/trips/allocation-presets?tripId=${tripId}`
+        : `${APP_URL}/trips/allocation-presets`;
+      const response = await fetch(url, {
         credentials: 'include',
         headers:{
             'Content-Type': 'application/json'

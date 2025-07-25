@@ -143,6 +143,7 @@ const BudgetSuggestions = ({ expenses, budget, categories, tripId, tripStart, tr
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         loading={loading}
+        tripId={tripId}
       />
       {suggestions.length > 0 && (
         <div className="budget-suggestions-section">
