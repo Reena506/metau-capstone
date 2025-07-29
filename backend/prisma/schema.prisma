@@ -22,7 +22,7 @@ model User {
   events Event[]
   expenses Expense[]
   notes Note[]
-
+  photos Photo[]
 
   Budget Budget[]
 }
@@ -37,8 +37,20 @@ model Trip{
   expenses Expense[]
   budget Budget[]
   notes Note[]
+  photos Photo[]
   userId Int
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade) // Defines the relationship
+}
+
+model Photo {
+  id Int @id @default(autoincrement())
+  url String
+  caption String?
+  tripId Int
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 
