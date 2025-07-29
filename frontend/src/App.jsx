@@ -12,6 +12,7 @@ import EditTrip from './components/EditTrip';
 import TripDetail from './components/TripDetail';
 import Notes from './components/Notes';
 import Suggestions from './components/Suggestions';
+import Photos from './components/Photos';
 import './App.css'
 import TripNavBar from './components/TripNavBar';
 import Itinerary from './components/Itinerary';
@@ -57,7 +58,7 @@ const App = () => {
               <Route path="suggestions" element={<Suggestions/>}/> 
               <Route path="itinerary" element={<Itinerary/>}/> 
               <Route path="expenses" element={<ExpenseTracker/>}/> 
-              
+              <Route path="photos" element={<Photos/>}/> 
            </Route>
         </Routes>
       </main>
