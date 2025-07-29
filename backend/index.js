@@ -2,6 +2,7 @@ require(`dotenv`).config();
 const express = require('express')
 const cors = require('cors')
 const session = require('express-session')
+const path = require('path')
 const PORT = 3000
 
 const triproutes=require('./routes/trips')
@@ -11,6 +12,7 @@ const noteroutes=require('./routes/notes')
 const budgetroutes=require('./routes/budget')
 const authRoutes = require('./routes/auth')
 const suggestionroutes= require('./routes/suggestions')
+const photoroutes = require('./routes/photos')
 const app = express()
 
 
@@ -34,7 +36,11 @@ app.use('/trips', eventroutes)
 app.use('/trips', expenseroutes)
 app.use('/trips', noteroutes)
 app.use('/trips', budgetroutes)
+app.use('/trips', photoroutes)
 app.use('/suggestions', suggestionroutes)
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 
 
