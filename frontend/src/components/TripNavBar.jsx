@@ -64,6 +64,12 @@ function TripNavBar() {
        >
          Expenses
        </Link>
+        <Link 
+         to={`/trips/${tripId}/photos`} 
+         className={`nav-link ${isActiveRoute(`/trips/${tripId}/photos`) ? 'active' : ''}`}
+       >
+         Photos
+       </Link>
      </nav>
 
      <div className="trip-content">
