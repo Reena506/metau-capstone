@@ -8,7 +8,7 @@ button {
   padding: 0.6rem 1.2rem;
   margin: 0.5rem;
   font-weight: 600;
-  background-color: #3498db;
+  background-color: navy;
   color: white;
   border: none;
   border-radius: 6px;
@@ -56,11 +56,11 @@ button:hover {
 }
 
 .trip-actions button {
-  background-color: #e74c3c;
+  background-color: rgb(22, 22, 97);
 }
 
 .trip-actions button:hover {
-  background-color: #c0392b;
+  background-color: rgb(64, 64, 141);
 }
 
 .modal {
@@ -105,3 +105,10 @@ button:hover {
   border: 1px solid #ccc;
 }
 
+.modal-actions{
+  padding: 2rem;
+}
+
+.form-group{
+  padding: 5px;
+}

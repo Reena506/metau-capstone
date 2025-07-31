@@ -206,7 +206,6 @@ const BudgetSettings = ({
               <div key={category} className="allocation-row">
                 <div className="allocation-label">
                   <span className="category-name">{category}</span>
-                  <span className="category-value">{tempAllocations[category]}%</span>
                 </div>
                 <input
                   type="range"

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import "./Photos.css"
 const APP_URL = import.meta.env.VITE_APP_URL;
 
 function Photos() {
@@ -213,7 +214,7 @@ function Photos() {
       {/* Photo grid */}
       <div className="photo-grid">
         {photos.length === 0 ? (
-          <p>No photos yet. Add some memories to your trip!</p>
+          ""
         ) : (
           photos.map((photo) => (
             <div key={photo.id} className="photo-item">
