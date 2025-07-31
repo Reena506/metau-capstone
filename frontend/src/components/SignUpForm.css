@@ -1,75 +1,91 @@
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: 'Segoe UI';
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
 .signup-form {
   max-width: 400px;
-  margin: 3rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI';
+  margin: 4rem auto;
+  padding: 2.5rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', sans-serif;
 }
 
 .signup-form label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  font-weight: 500;
+  margin-bottom: 1.5rem;
 }
 
 .signup-form input {
   width: 100%;
-  padding: 0.6rem 0.8rem;
-  margin-bottom: .3rem;
+  padding: 0.875rem 1rem;
+  margin-top: 0.5rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  transition: border 0.2s ease;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  color: #334155;
+  box-sizing: border-box;
 }
 
 .signup-form input:focus {
   outline: none;
   border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.form-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
+.signup-form input:hover {
+  border-color: #cbd5e1;
 }
 
 .signup-form button {
-  padding: 0.75rem 1.5rem;
-  background-color: #2ecc71;
+  width: 100%;
+  padding: 0.875rem;
+  background: navy;
   color: white;
   font-size: 1rem;
   font-weight: 600;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
 }
 
 .signup-form button:hover {
-  background-color: #27ae60;
+  background: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.signup-form button:active {
+  transform: translateY(0);
 }
 
 .message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 6px;
+  margin-top: 1.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
   font-size: 0.95rem;
   text-align: center;
+  font-weight: 500;
 }
 
 .message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 

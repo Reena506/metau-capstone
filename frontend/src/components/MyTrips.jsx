@@ -121,63 +121,71 @@ const MyTrips = () => {
 
       {showModal && (
         <div className="modal">
-          <form className="modal-content" onSubmit={handleCreateTrip}>
+          <div className="modal-content">
             <h3>Add New Trip</h3>
+            <form className="trip-form" onSubmit={handleCreateTrip}>
+              <div className="form-group">
+                <label htmlFor="title">Title</label>
+                <input
+                  id="title"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter trip title"
+                />
+              </div>
 
+              <div className="form-group">
+                <label htmlFor="destination">Destination</label>
+                <input
+                  id="destination"
+                  name="destination"
+                  value={form.destination}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter destination"
+                />
+              </div>
 
-            <label>
-              Title:
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                required
-              />
-            </label>
+              <div className="form-group">
+                <label htmlFor="start_date">Start Date</label>
+                <input
+                  id="start_date"
+                  type="date"
+                  name="start_date"
+                  value={form.start_date}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
+              <div className="form-group">
+                <label htmlFor="end_date">End Date</label>
+                <input
+                  id="end_date"
+                  type="date"
+                  name="end_date"
+                  value={form.end_date}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-            <label>
-              Destination:
-              <input
-                name="destination"
-                value={form.destination}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-
-            <label>
-              Start Date:
-              <input
-                type="date"
-                name="start_date"
-                value={form.start_date}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-
-            <label>
-              End Date:
-              <input
-                type="date"
-                name="end_date"
-                value={form.end_date}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-
-            <div>
-              <button type="submit">Create Trip</button>
-              <button type="button" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-            </div>
-          </form>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-button">
+                  Create Trip
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

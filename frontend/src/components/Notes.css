@@ -11,7 +11,7 @@
 }
 
 .add-btn {
-  background-color: #007bff;
+  background-color:navy;
   border: none;
   color: white;
   padding: 8px 16px;
@@ -71,7 +71,7 @@
 }
 
 .note-actions button:first-child {
-  background-color: #007bff;
+  background-color: navy;
 }
 
 .note-actions button:first-child:hover {
@@ -146,7 +146,7 @@
 }
 
 .modal-content button[type="submit"] {
-  background-color: #007bff;
+  background-color: navy;
   color: white;
 }
 

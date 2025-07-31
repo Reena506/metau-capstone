@@ -23,6 +23,8 @@ function ExpenseTracker() {
     y: 0,
   });
 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   // State for tracking if we are editing an expense
   const [editingExpense, setEditingExpense] = useState(null);
 
@@ -279,19 +281,32 @@ function ExpenseTracker() {
           </span>
         </div>
       </div>
-      {/* Budget Suggestions */}
-      {trip ? (
-        <BudgetSuggestions
-          expenses={expenses}
-          budget={budget}
-          categories={categories}
-          tripId={tripId}
-          tripStart={trip.start_date}
-          tripEnd={trip.end_date}
-        />
-      ) : (
-        <div>Loading trip...</div>
-      )}
+
+      {/* Budget Suggestions Toggle */}
+      <div className="section">
+        <button
+          className="suggestions-toggle"
+          onClick={() => setShowSuggestions(!showSuggestions)}
+        >
+          {showSuggestions
+            ? "Hide Budget Suggestions"
+            : "Show Budget Suggestions"}
+        </button>
+
+        {showSuggestions && trip && (
+          <BudgetSuggestions
+            expenses={expenses}
+            budget={budget}
+            categories={categories}
+            tripId={tripId}
+            tripStart={trip.start_date}
+            tripEnd={trip.end_date}
+          />
+        )}
+
+        {showSuggestions && !trip && <div>Loading trip...</div>}
+      </div>
+
       {/* Bar Chart Section */}
       {chartData.length > 0 && (
         <div className="section">
@@ -382,9 +397,9 @@ function ExpenseTracker() {
             onChange={handleChange}
             required
           />
-          <select 
-            name="eventId" 
-            value={form.eventId} 
+          <select
+            name="eventId"
+            value={form.eventId}
             onChange={handleChange}
             className="event-select"
           >
@@ -408,7 +423,7 @@ function ExpenseTracker() {
                     amount: "",
                     category: categories[0],
                     date: new Date().toISOString().split("T")[0],
-                    eventId: ""
+                    eventId: "",
                   });
                 }}
               >
@@ -431,7 +446,8 @@ function ExpenseTracker() {
                 <div className="expense-info">
                   <div className="expense-title">{expense.title}</div>
                   <div className="expense-details">
-                    ${parseFloat(expense.amount).toFixed(2)} • {expense.category} • {formatDate(expense.date)}
+                    ${parseFloat(expense.amount).toFixed(2)} •{" "}
+                    {expense.category} • {formatDate(expense.date)}
                     {expense.event && (
                       <div className="expense-event">
                         🎫 {expense.event.event} @ {expense.event.location}
@@ -441,7 +457,9 @@ function ExpenseTracker() {
                 </div>
                 <div className="expense-actions">
                   <button onClick={() => handleEdit(expense)}>Edit</button>
-                  <button onClick={() => handleDelete(expense.id)}>Delete</button>
+                  <button onClick={() => handleDelete(expense.id)}>
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -453,4 +471,3 @@ function ExpenseTracker() {
 }
 
 export default ExpenseTracker;
-
